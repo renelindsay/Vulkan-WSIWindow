@@ -1,4 +1,4 @@
-![LunarG Logo](./WSIWindow/docs/LunarG2.png "LunarG")
+![LunarG Logo](./LunarG2.png "LunarG")
 
 # WSI-Window
 
@@ -6,7 +6,7 @@
 >It also handles keyboard, mouse and touch-screen input, using query or event handler functions.  Its goal is to take care of all the platform-specific complexities of setting up a Vulkan environment, so you can quickly get started on writing great Vulkan code. :)
 
 
-![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
+![LunarG Logo](./platforms.png "Platforms")
 
 ## Supported platforms 
  - Windows
