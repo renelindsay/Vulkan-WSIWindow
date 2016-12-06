@@ -120,10 +120,10 @@ It provides the same functions as CLayers, for picking  extensions to load, and 
 ### WSIWindow class
 The WSIWindow class creates a Vulkan window, and provides function calls to query keyboard and mouse state, as well as callbacks, to notify you of system events. (window / keyboard / mouse / touch-screen)
 WSIWindow provides member functions for setting the window width, height, position and title.  These dimensions only apply to Linux and Windows, but are ignored on Android.
-However, right after window creation, the OnResizeEvent callback will be triggered, to return the actual window dimensions.  
-The "GetSurface" member function returns a **CSurface** class, which contains the VkSurfaceKHR of the window, and requires a VkInstance as input. (see CInstance class.)
-CSurface also provides the CanPresent() funtion, which wraps the `vkGetPhysicalDeviceSurfaceSupportKHR` functions. When creating a Vulkan queue, use CanPresent() to check if the queue family can present to this surface.
-Alternatively, WSIWindow also contains a CanPresent() member function, which wraps the set of `vkGetPhysicalDevice***PresentationSupportKHR` funcions, and can be used to check queue compatibility BEFORE creating a VkSurfaceKHR.  
+However, right after window creation, the OnResizeEvent callback will be triggered, to return the actual window dimensions. 
+
+The "GetSurface" member function takes a VkInstance as input (from CInstance), and returns a CSurface instance, which contains the VkSurfaceKHR of the window.  CSurface also provides the CanPresent() funtion, which wraps the `vkGetPhysicalDeviceSurfaceSupportKHR` function. When creating a Vulkan queue, use CanPresent() to check if the queue family can present to this surface.
+Alternatively, WSIWindow also contains a similar CanPresent() member function, which wraps the set of `vkGetPhysicalDevice***PresentationSupportKHR` funcions, and can be used to check queue compatibility BEFORE creating the VkSurfaceKHR.  
   
   
 #### The following query functions are provided:
