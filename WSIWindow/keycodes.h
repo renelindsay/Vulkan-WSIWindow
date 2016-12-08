@@ -41,59 +41,60 @@
 * but when text input is required, use the OnTextEvent instead, to get the correct
 * text symbol, according to the current configured keyboard layout settings.
 */
-// clang-format off
 
 #ifndef KEYCODE_H
 #define KEYCODE_H
+
+// clang-format off
 enum eKeycode {
-    KEY_NONE         = 0, // Undefined. (No event)
-    KEY_A            = 4,
-    KEY_B            = 5,
-    KEY_C            = 6,
-    KEY_D            = 7,
-    KEY_E            = 8,
-    KEY_F            = 9,
-    KEY_G            = 10,
-    KEY_H            = 11,
-    KEY_I            = 12,
-    KEY_J            = 13,
-    KEY_K            = 14,
-    KEY_L            = 15,
-    KEY_M            = 16,
-    KEY_N            = 17,
-    KEY_O            = 18,
-    KEY_P            = 19,
-    KEY_Q            = 20,
-    KEY_R            = 21,
-    KEY_S            = 22,
-    KEY_T            = 23,
-    KEY_U            = 24,
-    KEY_V            = 25,
-    KEY_W            = 26,
-    KEY_X            = 27,
-    KEY_Y            = 28,
-    KEY_Z            = 29,
-    KEY_1            = 30, // 1 and !
-    KEY_2            = 31, // 2 and @
-    KEY_3            = 32, // 3 and #
-    KEY_4            = 33, // 4 and $
-    KEY_5            = 34, // 5 and %
-    KEY_6            = 35, // 6 and ^
-    KEY_7            = 36, // 7 and &
-    KEY_8            = 37, // 8 and *
-    KEY_9            = 38, // 9 and (
-    KEY_0            = 39, // 0 and )
-    KEY_Enter        = 40, // (Return)
-    KEY_Escape       = 41,
-    KEY_Delete       = 42,
-    KEY_Tab          = 43,
-    KEY_Space        = 44,
-    KEY_Minus        = 45,  // - and (underscore)
-    KEY_Equals       = 46,  // = and +
-    KEY_LeftBracket  = 47,  // [ and {
-    KEY_RightBracket = 48,  // ] and }
-    KEY_Backslash    = 49,  // \ and |
- // KEY_NonUSHash    = 50,  // # and ~
+    KEY_NONE          = 0, // Undefined. (No event)
+    KEY_A             = 4,
+    KEY_B             = 5,
+    KEY_C             = 6,
+    KEY_D             = 7,
+    KEY_E             = 8,
+    KEY_F             = 9,
+    KEY_G             = 10,
+    KEY_H             = 11,
+    KEY_I             = 12,
+    KEY_J             = 13,
+    KEY_K             = 14,
+    KEY_L             = 15,
+    KEY_M             = 16,
+    KEY_N             = 17,
+    KEY_O             = 18,
+    KEY_P             = 19,
+    KEY_Q             = 20,
+    KEY_R             = 21,
+    KEY_S             = 22,
+    KEY_T             = 23,
+    KEY_U             = 24,
+    KEY_V             = 25,
+    KEY_W             = 26,
+    KEY_X             = 27,
+    KEY_Y             = 28,
+    KEY_Z             = 29,
+    KEY_1             = 30, // 1 and !
+    KEY_2             = 31, // 2 and @
+    KEY_3             = 32, // 3 and #
+    KEY_4             = 33, // 4 and $
+    KEY_5             = 34, // 5 and %
+    KEY_6             = 35, // 6 and ^
+    KEY_7             = 36, // 7 and &
+    KEY_8             = 37, // 8 and *
+    KEY_9             = 38, // 9 and (
+    KEY_0             = 39, // 0 and )
+    KEY_Enter         = 40, // (Return)
+    KEY_Escape        = 41,
+    KEY_Delete        = 42,
+    KEY_Tab           = 43,
+    KEY_Space         = 44,
+    KEY_Minus         = 45, // - and (underscore)
+    KEY_Equals        = 46, // = and +
+    KEY_LeftBracket   = 47, // [ and {
+    KEY_RightBracket  = 48, // ] and }
+    KEY_Backslash     = 49, // \ and |
+ // KEY_NonUSHash     = 50, // # and ~
     KEY_Semicolon     = 51, // ; and :
     KEY_Quote         = 52, // ' and "
     KEY_Grave         = 53,
@@ -143,32 +144,32 @@ enum eKeycode {
     KP_9              = 97,
     KP_0              = 98,
     KP_Point          = 99, // . and Del
- // KEY_NonUSBackslash = 100,  // \ and |
-    KP_Equals = 103,
-    KEY_F13   = 104,
-    KEY_F14   = 105,
-    KEY_F15   = 106,
-    KEY_F16   = 107,
-    KEY_F17   = 108,
-    KEY_F18   = 109,
-    KEY_F19   = 110,
-    KEY_F20   = 111,
-    KEY_F21   = 112,
-    KEY_F22   = 113,
-    KEY_F23   = 114,
-    KEY_F24   = 115,
- // KEY_Help  = 117,
-    KEY_Menu         = 118,
-    KEY_Mute         = 127,
-    KEY_VolumeUp     = 128,
-    KEY_VolumeDown   = 129,
-    KEY_LeftControl  = 224, // WARNING : Android has no Ctrl keys.
-    KEY_LeftShift    = 225,
-    KEY_LeftAlt      = 226,
-    KEY_LeftGUI      = 227,
-    KEY_RightControl = 228,
-    KEY_RightShift   = 229, // WARNING : Win32 fails to send a WM_KEYUP message if both shift keys are pressed, and one released.
-    KEY_RightAlt     = 230,
-    KEY_RightGUI     = 231
+    KP_Equals         = 103,
+    KEY_F13           = 104,
+    KEY_F14           = 105,
+    KEY_F15           = 106,
+    KEY_F16           = 107,
+    KEY_F17           = 108,
+    KEY_F18           = 109,
+    KEY_F19           = 110,
+    KEY_F20           = 111,
+    KEY_F21           = 112,
+    KEY_F22           = 113,
+    KEY_F23           = 114,
+    KEY_F24           = 115,
+ // KEY_Help          = 117,
+    KEY_Menu          = 118,
+    KEY_Mute          = 127,
+    KEY_VolumeUp      = 128,
+    KEY_VolumeDown    = 129,
+    KEY_LeftControl   = 224, // WARNING : Android has no Ctrl keys.
+    KEY_LeftShift     = 225,
+    KEY_LeftAlt       = 226,
+    KEY_LeftGUI       = 227,
+    KEY_RightControl  = 228,
+    KEY_RightShift    = 229, // WARNING : Win32 fails to send a WM_KEYUP message if both shift keys are pressed, and one released.
+    KEY_RightAlt      = 230,
+    KEY_RightGUI      = 231
 };
+// clang-format on
 #endif
