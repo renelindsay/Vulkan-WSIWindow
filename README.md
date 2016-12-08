@@ -27,7 +27,7 @@
  - Mouse input
  - Keyboard input (keycodes or localized text)
  - Window management
- - Multi-touch input (Android, Windows and Linux)
+ - Multi-touch input
 
 #### Todo (Contributions welcome)
  - Full screen mode
