@@ -9,4 +9,4 @@ endif()
 
 add_subdirectory(WSIWindow)
 add_subdirectory(WSIWindow_Sample1)
-#add_subdirectory(WSIWindow_Teapots)
+add_subdirectory(WSIWindow_Teapots)
