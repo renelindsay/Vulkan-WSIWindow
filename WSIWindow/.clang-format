@@ -5,15 +5,23 @@ IndentWidth: 4
 ColumnLimit: 132
 ---
 Language: Cpp
-DerivePointerAlignment: true
-PointerAlignment: Left
+PointerBindsToType: true
 
 IndentCaseLabels: true
 AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
 
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
+
+BinPackArguments: false
+BinPackParameters: false
+
+AlignTrailingComments: true
+ReflowComments:  false
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: true
 ...
