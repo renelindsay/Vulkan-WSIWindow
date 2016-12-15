@@ -27,17 +27,17 @@
 
 #include "WSIWindow.h"
 
+const char* type[]={"up  ","down","move"};
+
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow{
     //--Mouse event handler--
     void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn){
-        const char* type[]={"up  ","down","move"};
         printf("Mouse: %s %d x %d Btn:%d\n",type[action],x,y,btn);
     }
 
     //--Keyboard event handler--
     void OnKeyEvent(eAction action, eKeycode keycode){
-        const char* type[]={"up  ","down"};
         printf("Key: %s keycode:%d\n",type[action],keycode);
     }
 
@@ -63,7 +63,6 @@ class MyWindow : public WSIWindow{
 
     //--Multi-touch event handler--
     void OnTouchEvent(eAction action, float x, float y, uint8_t id){
-        const char* type[]={"up  ","down","move"};
         printf("Touch: %s %4.0f x %4.0f Finger id:%d\n",type[action],x,y,id);
     }
 
