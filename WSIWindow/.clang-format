@@ -3,6 +3,7 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 ColumnLimit: 132
+SortIncludes: false
 ---
 Language: Cpp
 PointerBindsToType: true
