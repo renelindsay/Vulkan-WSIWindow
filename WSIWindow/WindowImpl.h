@@ -31,19 +31,8 @@
 #include "keycodes.h"
 // clang-format off
 typedef unsigned int uint;
-enum eAction { eUP, eDOWN, eMOVE };                                       // keyboard / mouse / touchscreen actions
+enum eAction { eUP, eDOWN, eMOVE }; // keyboard / mouse / touchscreen actions
 
-//======================== FIFO Buffer =========================          // Used for event message queue
-template <typename T,uint SIZE> class FIFO{
-    int head, tail;
-    T buf[SIZE]={};
-  public:
-    FIFO():head(0),tail(0){}
-    bool isEmpty(){return head==tail;}                                    // Check if queue is empty.
-    void push(T const& item){ ++head; buf[head%=SIZE]=item; }             // Add item to queue
-    T* pop(){ if(head==tail)return 0; ++tail; return &buf[tail%=SIZE]; }  // Returns item ptr, or null if queue is empty
-};
-//==============================================================
 //========================Event Message=========================
 struct EventType{
     enum{NONE, MOUSE, KEY, TEXT, MOVE, RESIZE, FOCUS, TOUCH, CLOSE} tag;       // event type
@@ -58,6 +47,19 @@ struct EventType{
         struct {                                                  } close;     // Window is closing
     };
     void Clear() { tag = NONE; }
+};
+//==============================================================
+//======================== FIFO Buffer =========================          // Used for event message queue
+class EventFIFO {
+    static const char SIZE = 3; // The queue never contains more than 2 items.
+    int head, tail;
+    EventType buf[SIZE] = {};
+
+  public:
+    EventFIFO():head(0),tail(0){}
+    bool isEmpty(){return head==tail;}                                            // Check if queue is empty.
+    void push(EventType const& item){ ++head; buf[head%=SIZE]=item; }             // Add item to queue
+    EventType* pop(){ if(head==tail)return 0; ++tail; return &buf[tail%=SIZE]; }  // Returns item ptr, or null if queue is empty
 };
 //==============================================================
 //=========================MULTI-TOUCH==========================
@@ -97,7 +99,7 @@ class WindowImpl :public CSurface {
     bool btnstate[5]   = {};                                                   // mouse btn state
     bool keystate[256] = {};                                                   // keyboard state
   protected:
-    FIFO<EventType,4> eventFIFO;                        //Event message queue buffer (max 4 items)
+    EventFIFO eventFIFO;                                                       // Event message queue buffer
 
     EventType MouseEvent (eAction action, int16_t x, int16_t y, uint8_t btn);  // Mouse event
     EventType KeyEvent   (eAction action, uint8_t key);                        // Keyboard event
