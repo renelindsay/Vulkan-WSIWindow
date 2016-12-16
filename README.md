@@ -5,6 +5,10 @@
 >WSI-Window provides a simple cross-platform interface for creating a Vulkan window in C++.
 >It also handles keyboard, mouse and touch-screen input, using query or event handler functions.  Its goal is to take care of all the platform-specific complexities of setting up a Vulkan environment, so you can quickly get started on writing great Vulkan code. :)
 
+## Travis-CI Build Status
+| Platform | Build Status |
+|:--------:|:------------:|
+| Linux    | [![Linux Build Status](https://travis-ci.org/renelindsay/WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/WSIWindow) |
 
 ![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
 
