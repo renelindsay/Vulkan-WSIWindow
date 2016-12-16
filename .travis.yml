@@ -1,14 +1,20 @@
 # Ubuntu 14.04 Trusty support
-sudo: required
+os: linux
 dist: trusty
-# Enable C++ support
-language: cpp
-# Compiler selection
+language: c++
 compiler:
   - clang
   - gcc
+
+before_install: 
+  - sudo apt-get install git cmake build-essential bison 
+  - sudo apt-get install libx11-dev libxcb1-dev 
+  - sudo apt-get install libwayland-dev libmirclient-dev 
+  - sudo apt-get install libxkbcommon-dev
 # Build steps
 script:
   - mkdir build
   - cd build
-  - cmake .. && make
+  - cmake ..
+  - make
+
