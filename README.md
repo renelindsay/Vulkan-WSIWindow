@@ -8,7 +8,8 @@
 ## Travis-CI Build Status
 | Platform | Build Status |
 |:--------:|:------------:|
-| Linux    | [![Linux Build Status](https://travis-ci.org/renelindsay/WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/WSIWindow) |
+| Windows  | [![Windows Build status](https://ci.appveyor.com/api/projects/status/1kng5mnvn6ojvlh8?svg=true)](https://ci.appveyor.com/project/renelindsay/wsiwindow "Windows Build Status") |
+| Linux    | [![Linux Build Status](https://travis-ci.org/renelindsay/WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/WSIWindow "Linux Build Status") |
 
 ![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
 
