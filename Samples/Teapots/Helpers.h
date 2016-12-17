@@ -56,7 +56,7 @@ inline VkResult enumerate(VkInstance instance, std::vector<VkPhysicalDevice> &ph
 {
     uint32_t count = 0;
     vkEnumeratePhysicalDevices(instance, &count, nullptr);
-
+    if(!count) LOGW("No devices found by: 'vkEnumeratePhysicalDevices'.\n");
     phys.resize(count);
     return vkEnumeratePhysicalDevices(instance, &count, phys.data());
 }
