@@ -33,9 +33,7 @@ struct INITVULKAN {
     INITVULKAN() {
         bool success = (InitVulkan() == 1); // Returns true if this device supports Vulkan.
         LOG("Initialize Vulkan: ");
-        color(success ? eGREEN : eRED);
-        LOG(success ? "SUCCESS\n" : "FAILED (Vulkan driver not found.)\n");
-        color(eRESET);
+        print(success ? eGREEN : eRED, success ? "SUCCESS\n" : "FAILED (Vulkan driver not found.)\n");
     }
 } INITVULKAN; // Run this function BEFORE main.
 #endif
