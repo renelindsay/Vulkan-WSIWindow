@@ -53,12 +53,12 @@
 //===========================================Check VkResult=============================================
 // Macro to check VkResult for errors(negative) or warnings(positive), and print as a string.
 #ifdef NDEBUG                           //In release builds, don't print VkResult strings.
-  #define VKERRCHECK(VKFN) { VKFN; }
+#define VKERRCHECK(VKFN) { (void)VKFN; }
 #else                                   //In debug builds, show warnings and errors. assert on error.
-#define VKERRCHECK(VKFN) { VkResult VKRESULT=VKFN;                              \
-                             ShowVkResult(VKRESULT);                            \
-                             assert(VKRESULT>=0);                               \
-                             if(VKRESULT) printf("%s:%d\n",__FILE__,__LINE__);  \
+#define VKERRCHECK(VKFN) { VkResult VKRESULT=VKFN;                            \
+                           ShowVkResult(VKRESULT);                            \
+                           assert(VKRESULT>=0);                               \
+                           if(VKRESULT) printf("%s:%d\n",__FILE__,__LINE__);  \
                          }
 #endif
 //======================================================================================================
