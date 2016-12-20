@@ -1,22 +1,58 @@
-# Ubuntu 14.04 Trusty support
-os: linux
-dist: trusty
-language: c++
-compiler:
-#  - clang
-  - gcc
+# Android
+dist: xenial
+#language: cpp
+language: android
+jdk: oraclejdk8
 
-before_install: 
-  - sudo apt-get install git cmake build-essential bison 
-  - sudo apt-get install libx11-dev libxcb1-dev 
-  - sudo apt-get install libx11-xcb-dev #libx11-xcb1
-#  - sudo apt-get install libwayland-dev libmirclient-dev 
-  - sudo apt-get install libxkbcommon-dev
+android:
+  components:
+#    - tools
+#    - tools
+#    - platform-tools
+#    - build-tools-24.0.0
+#    - android-24
+#    - extra
+#    - extra-android-m2repository
+#    - extra-google-m2repository
+#    - extra-android-support
+#    - extra-google-google_play_services
+    
+#    - build-tools-21.1.2
+
+#    - tools
+#    - tools
+    - platform-tools
+    - android-23
+    - build-tools-23.0.1
+#    - extra
+    - extra-android-m2repository
+#    - extra-google-m2repository
+#    - extra-android-support
+#    - ndk-bundle
+#    - cmake
+#    - cmake-3.6.3155560 
+
+licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+    - 'build-tools-.+'
 
 # Build steps
 script:
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make
+   - curl -L http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin -O
+   - chmod u+x android-ndk-r10e-linux-x86_64.bin
+   - ./android-ndk-r10e-linux-x86_64.bin > /dev/null
+#  - rm android-ndk-r10e-linux-x86_64.bin
+   - export ANDROID_NDK_HOME=`pwd`/android-ndk-r10e
+   - export LOCAL_ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+   - export LOCAL_ANDROID_NDK_HOST_PLATFORM="linux-x86_64"
+   - export PATH=$PATH:${ANDROID_NDK_HOME}
+   - env
 
+   - wget https://github.com/Commit451/android-cmake-installer/releases/download/1.1.0/install-cmake.sh
+   - chmod +x install-cmake.sh
+   - ./install-cmake.sh
+
+#   - android update sdk --no-ui --all --filter build-tools-24.0.0,android-24,extra-android-m2repository
+   - cd ./Samples/Sample1/android
+   - ./gradlew build

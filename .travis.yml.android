@@ -1,0 +1,13 @@
+# Android
+language: android
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-25.2.4
+    - android-24
+
+# Build steps
+script:
+   - cd ./Samples/Sample1/android
+   - ./gradlew build
