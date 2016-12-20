@@ -5,18 +5,14 @@
 >WSI-Window provides a simple cross-platform interface for creating a Vulkan window in C++.
 >It also handles keyboard, mouse and touch-screen input, using query or event handler functions.  Its goal is to take care of all the platform-specific complexities of setting up a Vulkan environment, so you can quickly get started on writing great Vulkan code. :)
 
-## Build Status
-| Platform | Build Status |
-|:--------:|:------------:|
-| Windows  | [![Windows Build status](https://ci.appveyor.com/api/projects/status/1kng5mnvn6ojvlh8?svg=true)](https://ci.appveyor.com/project/renelindsay/wsiwindow "Windows Build Status") |
-| Linux    | [![Linux Build Status](https://travis-ci.org/renelindsay/Vulkan-WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/Vulkan-WSIWindow "Linux Build Status") |
+## Supported platforms
+| Platform         | Build Status |
+|:----------------:|:------------:|
+| Windows          | [![Windows Build status](https://ci.appveyor.com/api/projects/status/1kng5mnvn6ojvlh8?svg=true)](https://ci.appveyor.com/project/renelindsay/wsiwindow "Windows Build Status") |
+| Linux (XLib-XCB) | [![Linux Build Status](https://travis-ci.org/renelindsay/Vulkan-WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/Vulkan-WSIWindow "Linux Build Status") |
+| Android          | [![CircleCI](https://circleci.com/gh/renelindsay/Vulkan-WSIWindow.svg?style=shield)](https://circleci.com/gh/renelindsay/Vulkan-WSIWindow) |
 
 ![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
-
-## Supported platforms 
- - Windows
- - Linux XLib-XCB
- - Android
 
 #### Todo (Contributions welcome)
  - Apple OS X / iOS
