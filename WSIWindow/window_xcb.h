@@ -290,6 +290,14 @@ EventType Window_xcb::GetEvent(bool wait_for_event) {
     xcb_generic_event_t* x_event;
     if(wait_for_event) x_event = xcb_wait_for_event(xcb_connection);  // Blocking mode
     else               x_event = xcb_poll_for_event(xcb_connection);  // Non-blocking mode
+
+    // ---------- Temporary workaround for bug in Hologram + Intel-Mesa driver: ----------
+    // Filter out spammed event-35, triggered when resizing Hologram on Intel-Mesa.
+    while(x_event && ((x_event->response_type & ~0x80)==35) && (x_event->pad0 != xi_opcode)){
+        x_event = xcb_poll_for_event(xcb_connection);
+    }
+    //------------------------------------------------------------------------------------
+
     if(x_event){
         xcb_button_press_event_t& e =*(xcb_button_press_event_t*)x_event; //xcb_motion_notify_event_t
         int16_t mx =e.event_x;
@@ -368,7 +376,7 @@ EventType Window_xcb::GetEvent(bool wait_for_event) {
             }//XCB_GE_GENERIC
 #endif
         default:
-            // printf("EVENT: %d",(x_event->response_type & ~0x80));  //get event numerical value
+            printf("EVENT: %d\n",(x_event->response_type & ~0x80));  //get event numerical value
             break;
         } // switch
         free(x_event);
