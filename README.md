@@ -6,13 +6,16 @@
 >It also handles keyboard, mouse and touch-screen input, using query or event handler functions.  Its goal is to take care of all the platform-specific complexities of setting up a Vulkan environment, so you can quickly get started on writing great Vulkan code. :)
 
 ## Supported platforms
+
+![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
+  
+
 | Platform         | Build Status |
 |:----------------:|:------------:|
 | Windows          | [![Windows Build status](https://ci.appveyor.com/api/projects/status/1kng5mnvn6ojvlh8?svg=true)](https://ci.appveyor.com/project/renelindsay/wsiwindow "Windows Build Status") |
 | Linux (XLib-XCB) | [![Linux Build Status](https://travis-ci.org/renelindsay/Vulkan-WSIWindow.svg?branch=master)](https://travis-ci.org/renelindsay/Vulkan-WSIWindow "Linux Build Status") |
 | Android          | [![CircleCI](https://circleci.com/gh/renelindsay/Vulkan-WSIWindow.svg?style=shield)](https://circleci.com/gh/renelindsay/Vulkan-WSIWindow) |
 
-![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
 
 #### Todo (Contributions welcome)
  - Apple OS X / iOS
@@ -50,11 +53,15 @@ Install the Vulkan SDK, CMake and Visual Studio.
 Use cmake-gui to load the CMakeLists.txt file.  
 Configure CMake settings if needed, and generate the Visual Studio project.  
 Use Visual Studio to open the generated solution.  
-Set WSIWindow_Sample1 as the Startup project.  
+Set Sample1 as the Startup project.  
 Compile and run the sample project.
 
 ### Linux
 Install the Vulkan SDK and Qt-Creator. (CMake is optional.)  
+Also install the XCB (for Windowing) and XKB (for Keyboard) headers:
+
+    sudo apt-get install libx11-xcb-dev libxkbcommon-dev
+
 Use Qt-Creator to load the CMakeLists.txt project file, and tweak CMake settings under "Projects" if needed.  
 Compile and run the sample project.  
 
@@ -64,10 +71,12 @@ CMake configuration may be simplified by setting the VULKAN_SDK environment vari
 On Ubuntu, this may be done globally by adding the following line (or similar) to your ~/.profile file, and then reboot:  
   
   `export VULKAN_SDK="$HOME/VulkanSDK/1.0.xx.0/x86_64"`
+  
 
 ### Android (using Ubuntu as host)
 
-Install Android Studio 2.2 or later, including the NDK.
+Install Android Studio 2.2 or later.
+Use the Android SDK Manager to add the NDK and CMake modules. (under SDK Tools)
 Use Android Studio -> File -> New -> Import Project... to import the included Android Studio project.
 If you see Gradle errors, run the clear.sh script, to delete auto-generated files, and try again.
 Connect your device via USB, compile and run the sample project.  
@@ -239,16 +248,16 @@ Alternatively, WSIWindow also contains a similar CanPresent() member function, w
 
         #include "WSIWindow.h"
 
+        const char* type[]={"up  ","down","move"};
+
         class MyWindow : public WSIWindow{
             //--Mouse event handler--
             void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn){
-                const char* type[]={"up  ","down","move"};
                 printf("Mouse: %s %d x %d Btn:%d\n",type[action],x,y,btn);
             }
 
             //--Keyboard event handler--
             void OnKeyEvent(eAction action,uint8_t keycode){
-                const char* type[]={"up  ","down"};
                 printf("Key: %s keycode:%d\n",type[action],keycode);
             }
 
