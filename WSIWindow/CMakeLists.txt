@@ -88,9 +88,9 @@ if(WIN32)
     #target_link_libraries(${LIBRARY_NAME} "${VULKAN_SDK}/bin/vulkan-1.lib")
     #target_include_directories(${LIBRARY_NAME} PUBLIC "${VULKAN_SDK}/include")
     
-    if(NOT ${CMAKE_SYSTEM_VERSION} VERSION_LESS 10)                          # Check for Windows 10+
-        target_compile_definitions(${LIBRARY_NAME} PUBLIC -DWIN10PLUS)       # define WIN10PLUS
-    endif()
+    #if(NOT ${CMAKE_SYSTEM_VERSION} VERSION_LESS 10)                          # Check for Windows 10+
+    #    target_compile_definitions(${LIBRARY_NAME} PUBLIC -DWIN10PLUS)       # define WIN10PLUS
+    #endif()
 
     set (VULKAN_LOADER_NAME "vulkan-${MAJOR}")
 endif()
