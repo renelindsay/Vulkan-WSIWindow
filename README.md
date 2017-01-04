@@ -62,6 +62,10 @@ Also install the XCB (for Windowing) and XKB (for Keyboard) headers:
 
     sudo apt-get install libx11-xcb-dev libxkbcommon-dev
 
+To compile with Multi-touch support, you also need the XInput2.h header:
+
+    sudo apt-get install libxi-dev
+
 Use Qt-Creator to load the CMakeLists.txt project file, and tweak CMake settings under "Projects" if needed.  
 Compile and run the sample project.  
 

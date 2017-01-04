@@ -35,7 +35,7 @@ enum eAction { eUP, eDOWN, eMOVE }; // keyboard / mouse / touchscreen actions
 
 //========================Event Message=========================
 struct EventType{
-    enum{NONE, MOUSE, KEY, TEXT, MOVE, RESIZE, FOCUS, TOUCH, CLOSE} tag;       // event type
+    enum{NONE, MOUSE, KEY, TEXT, MOVE, RESIZE, FOCUS, TOUCH, CLOSE, UNKNOWN} tag; // event type
     union{
         struct {eAction action; int16_t x; int16_t y; uint8_t btn;} mouse;     // mouse move/click
         struct {eAction action; eKeycode keycode;                 } key;       // Keyboard key state

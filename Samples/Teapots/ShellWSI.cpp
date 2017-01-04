@@ -358,7 +358,7 @@ void ShellWSI::acquire_back_buffer(){
                     &buf.image_index);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        LOGW("VK_ERROR_OUT_OF_DATE_KHR\n");
+        LOGW("VK_ERROR_OUT_OF_DATE_KHR when calling vkAcquireNextImageKHR in %s, line: %d\n",__FILE__,__LINE__);
     } else VKERRCHECK(result);
 
     ctx_.acquired_back_buffer = buf;
