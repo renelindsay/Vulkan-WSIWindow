@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+
 set(LIBRARY_NAME WSIWindow)
 
 file(GLOB SRC_LIST "*.h" "*.cpp")                   # List all source files from current directory
