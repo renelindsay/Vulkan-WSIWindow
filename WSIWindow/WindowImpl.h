@@ -124,13 +124,14 @@ class WindowImpl :public CSurface {
     bool BtnState(uint8_t  btn){ return (btn<3)  ? btnstate[btn]:0; }          // returns true if mouse btn is pressed
     void MousePos(int16_t& x, int16_t& y){x=mousepos.x; y=mousepos.y; }        // returns mouse x,y position
 
-    virtual void TextInput(bool enabled);                    //Enable TextEvent, (and on Android, show the soft-keyboard) //TODO: finish this
-    virtual bool TextInput() { return textinput; }           //Returns true if text input is enabled (and on android, keyboard is visible.) //TODO
+    virtual void TextInput(bool enabled);                      // Enable TextEvent, (and on Android, show the soft-keyboard) //TODO: finish this
+    virtual bool TextInput() { return textinput; }             // Returns true if text input is enabled (and on android, keyboard is visible.) //TODO
 
-    virtual EventType GetEvent(bool wait_for_event=false)=0; //fetch one event from the queue. the 'wait_for_event' flag enables blocking mode.
+    virtual EventType GetEvent(bool wait_for_event=false) = 0; // Fetch one event from the queue. the 'wait_for_event' flag enables blocking mode.
 
     virtual void SetTitle(const char* title) = 0;
-    virtual void SetWinPos(uint x, uint y, uint w, uint h) = 0;
+    virtual void SetWinPos (uint x, uint y)  = 0;
+    virtual void SetWinSize(uint w, uint h)  = 0;
 };
 //==============================================================
 

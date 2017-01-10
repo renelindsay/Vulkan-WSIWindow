@@ -106,7 +106,8 @@ class Window_xcb : public WindowImpl {
     //------------------
 
     void SetTitle(const char* title);
-    void SetWinPos(uint x, uint y, uint w, uint h);
+    void SetWinPos (uint x, uint y);
+    void SetWinSize(uint w, uint h);
     void CreateSurface(VkInstance instance);
     bool InitTouch(); // Returns false if no touch-device was found.
     EventType TranslateEvent(xcb_generic_event_t* x_event); // Convert x_event to WSIWindow event
@@ -121,7 +122,6 @@ class Window_xcb : public WindowImpl {
 
 //=======================XCB IMPLEMENTATION=====================
 Window_xcb::Window_xcb(const char* title, uint width, uint height) {
-    // instance=inst;
     shape.width  = width;
     shape.height = height;
     running      = true;
@@ -210,11 +210,15 @@ void Window_xcb::SetTitle(const char* title) {
     xcb_flush(xcb_connection);
 }
 
-void Window_xcb::SetWinPos(uint x, uint y, uint w, uint h) {
-    uint values[] = {x, y, w, h};
-    xcb_configure_window(xcb_connection, xcb_window,
-                         XCB_CONFIG_WINDOW_X     | XCB_CONFIG_WINDOW_Y |
-                         XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, values);
+void Window_xcb::SetWinPos(uint x, uint y) {
+    uint values[] = {x, y};
+    xcb_configure_window(xcb_connection, xcb_window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
+    xcb_flush(xcb_connection);
+}
+
+void Window_xcb::SetWinSize(uint w, uint h) {
+    uint values[] = {w, h};
+    xcb_configure_window(xcb_connection, xcb_window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, values);
     xcb_flush(xcb_connection);
 }
 
