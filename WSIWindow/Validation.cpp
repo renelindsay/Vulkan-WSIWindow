@@ -43,8 +43,8 @@ struct INITVULKAN {
 //-------------------------Text Color--------------------------
 void color(eColor color) { // Sets Terminal text color (Win32/Linux)
 #ifdef _WIN32
-    const char bgr[] = {7,4,2,6,1,5,3,7, 8,12,10,14,9,13,11,15}; //RGB-to-BGR
-    HANDLE hConsole  = GetStdHandle(STD_OUTPUT_HANDLE);
+    const char bgr[] = {7, 4, 2, 6, 1, 5, 3, 7, 8, 12, 10, 14, 9, 13, 11, 15}; // RGB-to-BGR
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, bgr[color]);
 #elif __LINUX__
     printf("\033[%dm", (color & 8) ? 1 : 0);   // faint or normal
@@ -126,22 +126,22 @@ void CDebugReport::Init(VkInstance inst){
     vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT");
 
     instance = inst;
-    func     = DebugReportFn;                              //Use default debug-report function.
-    flags = VK_DEBUG_REPORT_INFORMATION_BIT_EXT         |  // 1
-            VK_DEBUG_REPORT_WARNING_BIT_EXT             |  // 2
-            VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |  // 4
-            VK_DEBUG_REPORT_ERROR_BIT_EXT               |  // 8
-            VK_DEBUG_REPORT_DEBUG_BIT_EXT               |  //16
+    func  = DebugReportFn;                                // Use default debug-report function.
+    flags = VK_DEBUG_REPORT_INFORMATION_BIT_EXT         | // 1
+            VK_DEBUG_REPORT_WARNING_BIT_EXT             | // 2
+            VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | // 4
+            VK_DEBUG_REPORT_ERROR_BIT_EXT               | // 8
+            VK_DEBUG_REPORT_DEBUG_BIT_EXT               | //16
             0;
     Set(flags, func);
 }
 
-void CDebugReport::SetFlags   (VkDebugReportFlagsEXT flags)           { Set(flags,func); Print(); }
-void CDebugReport::SetCallback(PFN_vkDebugReportCallbackEXT debugFunc){ Set(flags,debugFunc);     }
+void CDebugReport::SetFlags   (VkDebugReportFlagsEXT flags)            { Set(flags, func); Print(); }
+void CDebugReport::SetCallback(PFN_vkDebugReportCallbackEXT debugFunc) { Set(flags,debugFunc);      }
 
 void CDebugReport::Set(VkDebugReportFlagsEXT newFlags, PFN_vkDebugReportCallbackEXT newFunc){
     if(!instance) {LOGW("Debug Report was not initialized.\n"); return;}
-    if(!newFunc) newFunc=DebugReportFn;      // ensure callback is not empty
+    if(!newFunc) newFunc = DebugReportFn; // ensure callback is not empty
     func  = newFunc;
     flags = newFlags;
 

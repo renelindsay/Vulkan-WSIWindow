@@ -63,7 +63,7 @@
 
 #ifndef WSIWINDOW_H
 #define WSIWINDOW_H
-// clang-format off
+
 //===========================WSIWindow==========================
 class WSIWindow {
     WindowImpl* pimpl;
@@ -89,9 +89,9 @@ class WSIWindow {
     void Close();                                      // Close the window
 
     //--Event loop--
-    EventType GetEvent(bool wait_for_event = false);   // Return a single event from the queue (Alternative to using ProcessEvents.)
-    bool ProcessEvents(bool wait_for_event = false);   // Poll events, and call event handlers. Returns false if window is closing.
-    //void Run(){ while(ProcessEvents()){} }             // Run message loop until window is closed.  TODO: OnFrameEvent?
+    EventType GetEvent(bool wait_for_event = false); // Return a single event from the queue (Alternative to using ProcessEvents.)
+    bool ProcessEvents(bool wait_for_event = false); // Poll events, and call event handlers. Returns false if window is closing.
+    // void Run(){ while(ProcessEvents()){} }        // Run message loop until window is closed.  TODO: OnFrameEvent?
 
     //-- Virtual Functions as event handlers --
     virtual void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn) {} // Callback for mouse events

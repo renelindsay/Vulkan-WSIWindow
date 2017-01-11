@@ -187,26 +187,26 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
         uint8_t bestBtn = BtnState(1) ? 1 : BtnState(2) ? 2 :BtnState(3) ? 3 : 0;
         switch (msg.message) {
             //--Mouse events--
-            case WM_MOUSEMOVE  : return MouseEvent(eMOVE,x,y,bestBtn);
-            case WM_LBUTTONDOWN: return MouseEvent(eDOWN,x,y,1);
-            case WM_MBUTTONDOWN: return MouseEvent(eDOWN,x,y,2);
-            case WM_RBUTTONDOWN: return MouseEvent(eDOWN,x,y,3);
-            case WM_LBUTTONUP  : return MouseEvent(eUP  ,x,y,1);
-            case WM_MBUTTONUP  : return MouseEvent(eUP  ,x,y,2);
-            case WM_RBUTTONUP  : return MouseEvent(eUP  ,x,y,3);
+            case WM_MOUSEMOVE  : return MouseEvent(eMOVE, x, y, bestBtn);
+            case WM_LBUTTONDOWN: return MouseEvent(eDOWN, x, y, 1);
+            case WM_MBUTTONDOWN: return MouseEvent(eDOWN, x, y, 2);
+            case WM_RBUTTONDOWN: return MouseEvent(eDOWN, x, y, 3);
+            case WM_LBUTTONUP  : return MouseEvent(eUP  , x, y, 1);
+            case WM_MBUTTONUP  : return MouseEvent(eUP  , x, y, 2);
+            case WM_RBUTTONUP  : return MouseEvent(eUP  , x, y, 3);
             //--Mouse wheel events--
             case WM_MOUSEWHEEL: {
                 uint8_t wheel = (GET_WHEEL_DELTA_WPARAM(msg.wParam) > 0) ? 4 : 5;
-                POINT point = { x,y };
+                POINT point = {x, y};
                 ScreenToClient(msg.hwnd, &point);
-                return{ EventType::MOUSE,{ eDOWN,(int16_t)point.x, (int16_t)point.y, wheel } };
+                return {EventType::MOUSE, {eDOWN, (int16_t)point.x, (int16_t)point.y, wheel}};
             }
             //--Keyboard events--
             case WM_KEYDOWN   : return KeyEvent(eDOWN, WIN32_TO_HID[msg.wParam]);
             case WM_KEYUP     : return KeyEvent(eUP  , WIN32_TO_HID[msg.wParam]);
-            case WM_SYSKEYDOWN: {MSG discard; GetMessage(&discard, NULL, 0, 0);      //Alt-key triggers a WM_MOUSEMOVE message... Discard it.
-                                return KeyEvent(eDOWN, WIN32_TO_HID[msg.wParam]); }  //+alt key
-            case WM_SYSKEYUP  : return KeyEvent(eUP  , WIN32_TO_HID[msg.wParam]);    //+alt key
+            case WM_SYSKEYDOWN: {MSG discard; GetMessage(&discard, NULL, 0, 0);     // Alt-key triggers a WM_MOUSEMOVE message... Discard it.
+                                return KeyEvent(eDOWN, WIN32_TO_HID[msg.wParam]); } // +alt key
+            case WM_SYSKEYUP  : return KeyEvent(eUP  , WIN32_TO_HID[msg.wParam]);   // +alt key
 
             //--Char event--
             case WM_CHAR: { strncpy_s(buf, (const char*)&msg.wParam, 4);  return TextEvent(buf); } //return UTF8 code of key pressed
@@ -215,8 +215,8 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
 
             case WM_RESHAPE: {
                 if (!has_focus) {
-                    PostMessage(hWnd, WM_RESHAPE, msg.wParam, msg.lParam);  //Repost this event to the queue
-                    return FocusEvent(true);                                //Activate window before reshape
+                    PostMessage(hWnd, WM_RESHAPE, msg.wParam, msg.lParam);  // Repost this event to the queue
+                    return FocusEvent(true);                                // Activate window before reshape
                 }
 
                 RECT r; GetClientRect(hWnd, &r);
@@ -227,7 +227,7 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
                 GetWindowRect(hWnd, &r);
                 int16_t x = (int16_t)r.left;
                 int16_t y = (int16_t)r.top;
-                if (x != shape.x || y != shape.y) return MoveEvent  (x, y); // window moved
+                if (x != shape.x || y != shape.y) return MoveEvent(x, y); // window moved
             }
             case WM_CLOSE: { LOGI("WM_CLOSE\n");  return CloseEvent(); }
 #ifdef ENABLE_MULTITOUCH
@@ -240,20 +240,20 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
                     POINT pt = pointerInfo.ptPixelLocation;
                     ScreenToClient(hWnd, &pt);
                     switch (msg.message) {
-                        case WM_POINTERDOWN  :{
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i]==0){          //Find first empty slot
-                                touchID[i]=id;                                          //Claim slot
+                        case WM_POINTERDOWN: {
+                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == 0){        //Find first empty slot
+                                touchID[i] = id;                                        //Claim slot
                                 return MTouch.Event(eDOWN,x,y,i);                       //touch down event
                             }
                         }
-                        case WM_POINTERUPDATE:{
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i]==id){          //Find first empty slot
+                        case WM_POINTERUPDATE: {
+                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == id){       //Find first empty slot
                                 return MTouch.Event(eMOVE,x,y,i);                       //touch move event
                             }
                         }
-                        case WM_POINTERUP    :{
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i]==id){         //Find first empty slot
-                                touchID[i]=0;                                           //Clear slot
+                        case WM_POINTERUP: {
+                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == id){       //Find first empty slot
+                                touchID[i] = 0;                                         //Clear slot
                                 return MTouch.Event(eUP  ,x,y,i);                       //touch up event
                             }
                         }
@@ -278,10 +278,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             PostQuitMessage(0);
             return 0;
         case WM_PAINT:
-            //printf("WM_PAINT\n");
+            // printf("WM_PAINT\n");
             return 0;
         case WM_GETMINMAXINFO:     // set window's minimum size
-            //((MINMAXINFO*)lParam)->ptMinTrackSize = demo.minsize;
+            // ((MINMAXINFO*)lParam)->ptMinTrackSize = demo.minsize;
             return 0;
         case WM_EXITSIZEMOVE : { PostMessage(hWnd, WM_RESHAPE, 0, 0);          break; }
         case WM_ACTIVATE     : { PostMessage(hWnd, WM_ACTIVE, wParam, lParam); break; }

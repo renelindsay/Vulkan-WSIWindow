@@ -19,8 +19,10 @@
 *
 *--------------------------------------------------------------------------
 * FIFO Buffer is used in the few cases where event messages need to be buffered.
-* EventType contains a union struct of all possible message types that may be retured by PollEvent.
+* EventType contains a union struct of all possible message types that may be retured by GetEvent.
 * WindowImpl is the abstraction layer base class for the platform-specific windowing code.
+* CSurface Contains the vulkan Surface.
+* Before creating a queue, use CanPresent() to check if the surface can present to the given queue type.
 *--------------------------------------------------------------------------
 */
 
@@ -42,7 +44,7 @@ struct EventType{
         struct {const char* str;                                  } text;      // Text entered
         struct {int16_t x; int16_t y;                             } move;      // Window move
         struct {uint16_t width; uint16_t height;                  } resize;    // Window resize
-        struct {bool hasFocus;                                    } focus;     // Window gained/lost focus
+        struct {bool has_focus;                                   } focus;     // Window gained/lost focus
         struct {eAction action; float x; float y; uint8_t id;     } touch;     // multi-touch display
         struct {                                                  } close;     // Window is closing
     };
@@ -56,10 +58,10 @@ class EventFIFO {
     EventType buf[SIZE] = {};
 
   public:
-    EventFIFO():head(0),tail(0){}
-    bool isEmpty(){return head==tail;}                                            // Check if queue is empty.
-    void push(EventType const& item){ ++head; buf[head%=SIZE]=item; }             // Add item to queue
-    EventType* pop(){ if(head==tail)return 0; ++tail; return &buf[tail%=SIZE]; }  // Returns item ptr, or null if queue is empty
+    EventFIFO() : head(0),tail(0){}
+    bool isEmpty() { return head == tail; }                                              // Check if queue is empty.
+    void push(EventType const& item) { ++head; buf[head %= SIZE] = item; }               // Add item to queue
+    EventType* pop() { if (head == tail) return 0; ++tail; return &buf[tail %= SIZE]; }  // Returns item ptr, or null if queue is empty
 };
 //==============================================================
 //=========================MULTI-TOUCH==========================
@@ -84,10 +86,11 @@ class CMTouch{
 };
 //==============================================================
 //===========================CSurface===========================
-class CSurface{                                                                // Vulkan Surface
+class CSurface {                                                               // Vulkan Surface
   protected:
     VkInstance  instance = 0;
     VkSurfaceKHR surface = 0;
+
   public:
     operator VkSurfaceKHR () const {return surface;}                           // Use this class as a VkSurfaceKHR
     bool CanPresent(VkPhysicalDevice gpu, uint32_t queue_family);              // Checks if this surface can present the given queue type. (After creating surface)
@@ -106,28 +109,27 @@ class WindowImpl :public CSurface {
     EventType TextEvent  (const char* str);                                    // Text event
     EventType MoveEvent  (int16_t x, int16_t y);                               // Window moved
     EventType ResizeEvent(uint16_t width, uint16_t height);                    // Window resized
-    EventType FocusEvent (bool hasFocus);                                      // Window gained/lost focus
+    EventType FocusEvent (bool has_focus);                                     // Window gained/lost focus
     EventType CloseEvent ();                                                   // Window closing
   public:
     bool running;
     bool textinput;
     bool has_focus;                                                            // true if window has focus
-    struct shape_t { int16_t x; int16_t y; uint16_t width; uint16_t height; }shape = {};  // window shape
+    struct shape_t { int16_t x; int16_t y; uint16_t width; uint16_t height; } shape = {};  // window shape
 
     WindowImpl() : running(false), textinput(false), has_focus(false){}
     virtual ~WindowImpl() { if(surface) vkDestroySurfaceKHR(instance,surface,NULL); surface = 0; }
     virtual void Close() { eventFIFO.push(CloseEvent()); }
     virtual void CreateSurface(VkInstance instance) = 0;
-    virtual bool CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) = 0;  // Checks if this window can present the given queue type. (Before creating surface)
+    virtual bool CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) = 0;  // Checks if window can present the given queue type.
 
     bool KeyState(eKeycode key){ return keystate[key]; }                       // returns true if key is pressed
-    bool BtnState(uint8_t  btn){ return (btn<3)  ? btnstate[btn]:0; }          // returns true if mouse btn is pressed
-    void MousePos(int16_t& x, int16_t& y){x=mousepos.x; y=mousepos.y; }        // returns mouse x,y position
+    bool BtnState(uint8_t  btn){ return (btn < 3) ? btnstate[btn] : 0; }       // returns true if mouse btn is pressed
+    void MousePos(int16_t& x, int16_t& y){x = mousepos.x; y = mousepos.y;}     // returns mouse x,y position
 
-    virtual void TextInput(bool enabled);                      // Enable TextEvent, (and on Android, show the soft-keyboard) //TODO: finish this
-    virtual bool TextInput() { return textinput; }             // Returns true if text input is enabled (and on android, keyboard is visible.) //TODO
-
-    virtual EventType GetEvent(bool wait_for_event=false) = 0; // Fetch one event from the queue. the 'wait_for_event' flag enables blocking mode.
+    virtual void TextInput(bool enabled);                        // Shows the Android soft-keyboard. //TODO: Enable TextEvent?
+    virtual bool TextInput() { return textinput; }               // Returns true if text input is enabled TODO: Fix this
+    virtual EventType GetEvent(bool wait_for_event = false) = 0; // Fetch one event from the queue.
 
     virtual void SetTitle(const char* title) = 0;
     virtual void SetWinPos (uint x, uint y)  = 0;

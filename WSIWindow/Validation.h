@@ -46,23 +46,25 @@
 //------------------------------------------
 //------------Fix for VS2013----------------
 #if _MSC_VER == 1800
+#ifndef snprintf
 #define snprintf _snprintf
+#endif
 #endif
 //------------------------------------------
 
 //===========================================Check VkResult=============================================
 // Macro to check VkResult for errors(negative) or warnings(positive), and print as a string.
-#ifdef NDEBUG                           //In release builds, don't print VkResult strings.
+#ifdef NDEBUG                           // In release builds, don't print VkResult strings.
 #define VKERRCHECK(VKFN) { (void)VKFN; }
-#else                                   //In debug builds, show warnings and errors. assert on error.
-#define VKERRCHECK(VKFN) { VkResult VKRESULT=VKFN;                            \
+#else                                   // In debug builds, show warnings and errors. assert on error.
+#define VKERRCHECK(VKFN) { VkResult VKRESULT = VKFN;                          \
                            ShowVkResult(VKRESULT);                            \
-                           assert(VKRESULT>=0);                               \
+                           assert(VKRESULT >= 0);                             \
                            if(VKRESULT) printf("%s:%d\n",__FILE__,__LINE__);  \
                          }
 #endif
 //======================================================================================================
-// clang-format off
+
 //===============================================LOGGING================================================
 //  If enabled, the 6 LOG* functions print logging messages to the console, or Android LogCat.
 //  LOG* functions can be used in the same way as printf, but uses color-coding, for better readability.
@@ -139,9 +141,9 @@ void color(eColor color);
 //#define USE_VULKAN_WRAPPER
 
 #ifdef USE_VULKAN_WRAPPER
-#include <vulkan_wrapper.h>            // PC: Build dispatch table, so we can skip loader trampoline-code
+#include <vulkan_wrapper.h> // PC: Build dispatch table, so we can skip loader trampoline-code
 #else
-#include <vulkan/vulkan.h>             // Android: This must be included AFTER native.h
+#include <vulkan/vulkan.h>  // Android: This must be included AFTER native.h
 #endif
 //======================================================================================================
 

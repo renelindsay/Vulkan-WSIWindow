@@ -61,9 +61,6 @@ int printf(const char* format,...){  //printf for Android
 }
 //--------------------------------------------------------------------------------------------------
 
-
-
-
 android_app* Android_App=0;                //Android native-actvity state
 /*
 //--------------------TEMP------------------------
@@ -111,16 +108,16 @@ int main(int argc, char *argv[]);          // Forward declaration of main functi
 void android_main(struct android_app* state) {
     printf("Native Activity\n");
     app_dummy();                           // Make sure glue isn't stripped
-    //state->onAppCmd     = handle_cmd;      // Register window event callback  (Temporary)
-    //state->onInputEvent = handle_input;    // Register input event callback   (Temporary)
-    Android_App=state;                     // Pass android app state to window_andoid.cpp
+    // state->onAppCmd     = handle_cmd;      // Register window event callback  (Temporary)
+    // state->onInputEvent = handle_input;    // Register input event callback   (Temporary)
+    Android_App = state;                     // Pass android app state to window_andoid.cpp
 
-    android_fopen_set_asset_manager(state->activity->assetManager);  //Re-direct fopen to read assets from our APK.
+    android_fopen_set_asset_manager(state->activity->assetManager);  // Re-direct fopen to read assets from our APK.
 
-    //int success=InitVulkan();
-    //printf("InitVulkan : %s\n",success ? "SUCCESS" : "FAILED");
+    // int success=InitVulkan();
+    // printf("InitVulkan : %s\n",success ? "SUCCESS" : "FAILED");
 
-    main(0,NULL);
+    main(0, NULL);
 
     printf("Exiting.\n");
     ANativeActivity_finish(state->activity);
@@ -129,14 +126,14 @@ void android_main(struct android_app* state) {
 
 //========================UGLY JNI code for showing the Keyboard========================
 
-#define CALL_OBJ_METHOD( OBJ,METHOD,SIGNATURE, ...) jniEnv->CallObjectMethod ( OBJ, jniEnv->GetMethodID( jniEnv->GetObjectClass(OBJ),METHOD,SIGNATURE ), __VA_ARGS__ )
-#define CALL_BOOL_METHOD(OBJ,METHOD,SIGNATURE, ...) jniEnv->CallBooleanMethod( OBJ, jniEnv->GetMethodID( jniEnv->GetObjectClass(OBJ),METHOD,SIGNATURE ), __VA_ARGS__ )
+#define CALL_OBJ_METHOD( OBJ,METHOD,SIGNATURE, ...) jniEnv->CallObjectMethod (OBJ, jniEnv->GetMethodID(jniEnv->GetObjectClass(OBJ),METHOD,SIGNATURE), __VA_ARGS__)
+#define CALL_BOOL_METHOD(OBJ,METHOD,SIGNATURE, ...) jniEnv->CallBooleanMethod(OBJ, jniEnv->GetMethodID(jniEnv->GetObjectClass(OBJ),METHOD,SIGNATURE), __VA_ARGS__)
 
 void ShowKeyboard(bool visible,int flags){
     // Attach current thread to the JVM.
     JavaVM* javaVM = Android_App->activity->vm;
     JNIEnv* jniEnv = Android_App->activity->env;
-    JavaVMAttachArgs Args={JNI_VERSION_1_6, "NativeThread", NULL};
+    JavaVMAttachArgs Args = {JNI_VERSION_1_6, "NativeThread", NULL};
     javaVM->AttachCurrentThread(&jniEnv, &Args);
 
     // Retrieve NativeActivity.
@@ -151,8 +148,8 @@ void ShowKeyboard(bool visible,int flags){
     jobject   lInputMethodManager = CALL_OBJ_METHOD(lNativeActivity, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;", INPUT_METHOD_SERVICE);
 
     // getWindow().getDecorView().
-    jobject   lWindow    = CALL_OBJ_METHOD (lNativeActivity,"getWindow", "()Landroid/view/Window;",0);
-    jobject   lDecorView = CALL_OBJ_METHOD (lWindow, "getDecorView", "()Landroid/view/View;",0);
+    jobject lWindow    = CALL_OBJ_METHOD(lNativeActivity,"getWindow", "()Landroid/view/Window;",0);
+    jobject lDecorView = CALL_OBJ_METHOD(lWindow, "getDecorView", "()Landroid/view/View;",0);
     if (visible) {
         jboolean lResult = CALL_BOOL_METHOD(lInputMethodManager, "showSoftInput", "(Landroid/view/View;I)Z", lDecorView, flags);
     } else {
@@ -171,7 +168,7 @@ int GetUnicodeChar(int eventType, int keyCode, int metaState){
 
     JavaVMAttachArgs Args={JNI_VERSION_1_6, "NativeThread", NULL};
     jint result = javaVM->AttachCurrentThread(&jniEnv, &Args);
-    if(result == JNI_ERR) return 0;
+    if (result == JNI_ERR) return 0;
 
     jclass class_key_event = jniEnv->FindClass("android/view/KeyEvent");
 
@@ -182,7 +179,7 @@ int GetUnicodeChar(int eventType, int keyCode, int metaState){
 
     javaVM->DetachCurrentThread();
 
-    //LOGI("Keycode: %d  MetaState: %d Unicode: %d", keyCode, metaState, unicodeKey);
+    // LOGI("Keycode: %d  MetaState: %d Unicode: %d", keyCode, metaState, unicodeKey);
     return unicodeKey;
 }
 //======================================================================================

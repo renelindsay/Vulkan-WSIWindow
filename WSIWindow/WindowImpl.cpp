@@ -62,10 +62,10 @@ EventType WindowImpl::ResizeEvent(uint16_t width, uint16_t height) {
     return e;
 }
 
-EventType WindowImpl::FocusEvent(bool hasFocus) {
-    has_focus        = hasFocus;
-    EventType e      = {EventType::FOCUS};
-    e.focus.hasFocus = hasFocus;
+EventType WindowImpl::FocusEvent(bool has_focus) {
+    this->has_focus   = has_focus;
+    EventType e       = {EventType::FOCUS};
+    e.focus.has_focus = has_focus;
     return e;
 }
 

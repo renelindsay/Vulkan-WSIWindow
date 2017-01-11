@@ -36,10 +36,10 @@ WSIWindow::WSIWindow(const char* title, const uint width, const uint height) {
     LOGI("PLATFORM: ANDROID\n");
     pimpl = new Window_android(title, width, height);
 #endif
-// TODO:
-//    #ifdef VK_USE_PLATFORM_XLIB_KHR
-//    #ifdef VK_USE_PLATFORM_MIR_KHR
-//    #ifdef VK_USE_PLATFORM_WAYLAND_KHR
+    // TODO:
+    //    #ifdef VK_USE_PLATFORM_XLIB_KHR
+    //    #ifdef VK_USE_PLATFORM_MIR_KHR
+    //    #ifdef VK_USE_PLATFORM_WAYLAND_KHR
 }
 
 WSIWindow::~WSIWindow() { delete (pimpl); }
@@ -51,11 +51,11 @@ CSurface& WSIWindow::GetSurface(VkInstance instance) {
 
 bool WSIWindow::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) { return pimpl->CanPresent(gpu, queue_family); }
 
-void WSIWindow::GetWinPos  (int16_t& x, int16_t& y){x=pimpl->shape.x; y=pimpl->shape.y;}
-void WSIWindow::GetWinSize (int16_t& width, int16_t& height){width=pimpl->shape.width; height=pimpl->shape.height;}
+void WSIWindow::GetWinPos  (int16_t& x, int16_t& y){x = pimpl->shape.x; y = pimpl->shape.y;}
+void WSIWindow::GetWinSize (int16_t& width, int16_t& height){width = pimpl->shape.width; height = pimpl->shape.height;}
 bool WSIWindow::GetKeyState(eKeycode key){ return pimpl->KeyState(key); }
 bool WSIWindow::GetBtnState(uint8_t  btn){ return pimpl->BtnState(btn); }
-void WSIWindow::GetMousePos(int16_t& x, int16_t& y){ pimpl->MousePos(x,y); }
+void WSIWindow::GetMousePos(int16_t& x, int16_t& y){ pimpl->MousePos(x, y); }
 
 void WSIWindow::SetTitle  (const char* title) { pimpl->SetTitle(title); }
 void WSIWindow::SetWinPos (uint16_t x, uint16_t y) { pimpl->SetWinPos (x, y); }
@@ -76,7 +76,7 @@ bool WSIWindow::ProcessEvents(bool wait_for_event) {
            case EventType::TEXT  : OnTextEvent  (e.text.str);                                         break;
            case EventType::MOVE  : OnMoveEvent  (e.move.x, e.move.y);                                 break;
            case EventType::RESIZE: OnResizeEvent(e.resize.width, e.resize.height);                    break;
-           case EventType::FOCUS : OnFocusEvent (e.focus.hasFocus);                                   break;
+           case EventType::FOCUS : OnFocusEvent (e.focus.has_focus);                                  break;
            case EventType::TOUCH : OnTouchEvent (e.touch.action, e.touch.x, e.touch.y, e.touch.id);   break;
            case EventType::CLOSE : OnCloseEvent (); return false;
            default: break;

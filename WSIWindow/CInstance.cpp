@@ -24,12 +24,12 @@
 
 //---------------------------PickList-----------------------------
 bool CPickList::IsPicked(const char* name) const {
-    for(auto item : pickList) { if(strcmp(name,item) == 0) return true; }
+    for (auto item : pick_list) { if(strcmp(name,item) == 0) return true; }
     return false;
 }
 
 int CPickList::IndexOf(const char* name) {
-    forCount(Count()) { if(strcmp(name, Name(i)) == 0) return i; }
+    forCount(Count()) { if (strcmp(name, Name(i)) == 0) return i; }
     return -1;
 }
 
@@ -48,29 +48,29 @@ bool CPickList::Pick(const char* name) {
 
 bool CPickList::Pick(const uint32_t inx) {      // Add indexed item to picklist.
     if (inx >= Count()) return false;           // Return false if index is out of range.
-    for (const char* pickItem : pickList)
+    for (const char* pickItem : pick_list)
         if (pickItem == Name(inx)) return true; // Check if item was already picked
-    pickList.push_back(Name(inx));              // if not, add item to pick-list
+    pick_list.push_back(Name(inx));             // if not, add item to pick-list
     return true;
 }
 
 void CPickList::UnPick(const char* name) {
-    forCount(PickCount()) if (strcmp(name, pickList[i]) == 0) pickList.erase(pickList.begin() + i);
+    forCount(PickCount()) if (strcmp(name, pick_list[i]) == 0) pick_list.erase(pick_list.begin() + i);
 }
 
 void CPickList::PickAll() { forCount(Count()) Pick(i); } // Pick All items
-void CPickList::Clear()   { pickList.clear(); }          // Clear Picklist
-char** CPickList::PickList()    const { return (char**)  pickList.data(); }
-uint32_t CPickList::PickCount() const { return (uint32_t)pickList.size(); }
+void CPickList::Clear()   { pick_list.clear(); }         // Clear Picklist
+char** CPickList::PickList()    const { return (char**)  pick_list.data(); }
+uint32_t CPickList::PickCount() const { return (uint32_t)pick_list.size(); }
 
 void CPickList::Print(const char* listName){
   printf("%s picked: %d of %d\n",listName,PickCount(),Count());
   forCount(Count()){
-      bool picked=false;
-      char* name=Name(i);
-      for(auto& pick : pickList) if(pick==name) picked=true;
-      if(picked){ print(eRESET, "\t%s %s\n",cTICK, name); }
-      else      { print(eFAINT, "\t%s %s\n"," "  , name); }
+      bool picked = false;
+      char* name = Name(i);
+      for(auto& pick : pick_list) if(pick == name) picked = true;
+      if (picked) { print(eRESET, "\t%s %s\n",cTICK, name); }
+      else        { print(eFAINT, "\t%s %s\n"," "  , name); }
   }
 }
 //----------------------------------------------------------------
@@ -80,10 +80,10 @@ CLayers::CLayers() {
     VkResult result;
     do {
         uint count = 0;
-        result     = vkEnumerateInstanceLayerProperties(&count, NULL);
+        result = vkEnumerateInstanceLayerProperties(&count, NULL);
         if (result == VK_SUCCESS && count > 0) {
-            itemList.resize(count);
-            result = vkEnumerateInstanceLayerProperties(&count, itemList.data());
+            item_list.resize(count);
+            result = vkEnumerateInstanceLayerProperties(&count, item_list.data());
         }
     } while (result == VK_INCOMPLETE);
     VKERRCHECK(result);
@@ -91,14 +91,14 @@ CLayers::CLayers() {
 //----------------------------------------------------------------
 
 //--------------------------Extensions----------------------------
-CExtensions::CExtensions(const char* layerName) {
+CExtensions::CExtensions(const char* layer_name) {
     VkResult result;
     do {
         uint count = 0;
-        result     = vkEnumerateInstanceExtensionProperties(layerName, &count, NULL);            // Get list size
-        if (result == VK_SUCCESS && count > 0) {
-            itemList.resize(count);                                                              // Resize buffer
-            result = vkEnumerateInstanceExtensionProperties(layerName, &count, itemList.data()); // Fetch list
+        result = vkEnumerateInstanceExtensionProperties(layer_name, &count, NULL);                 // Get list size
+        if (result == VK_SUCCESS && count > 0) {                                                   //
+            item_list.resize(count);                                                               // Resize buffer
+            result = vkEnumerateInstanceExtensionProperties(layer_name, &count, item_list.data()); // Fetch list
         }
     } while (result == VK_INCOMPLETE); // If list is incomplete, try again.
     VKERRCHECK(result);                // report errors
@@ -106,10 +106,11 @@ CExtensions::CExtensions(const char* layerName) {
 //----------------------------------------------------------------
 
 //---------------------------CInstance----------------------------
-CInstance::CInstance(const bool enableValidation, const char* appName, const char* engineName) {
+CInstance::CInstance(const bool enable_validation, const char* app_name, const char* engine_name) {
     CLayers layers;
 #ifdef ENABLE_VALIDATION
-    if(enableValidation){
+// clang-format off
+    if(enable_validation){
         layers.Pick({"VK_LAYER_GOOGLE_threading",
                      "VK_LAYER_LUNARG_parameter_validation",
                      "VK_LAYER_LUNARG_object_tracker",
@@ -117,28 +118,29 @@ CInstance::CInstance(const bool enableValidation, const char* appName, const cha
                      "VK_LAYER_LUNARG_core_validation",
                      "VK_LAYER_LUNARG_swapchain",
                      "VK_LAYER_GOOGLE_unique_objects"});
+// clang-format on
     }
     layers.Print();
 #endif
     CExtensions extensions;
     if (extensions.Pick(VK_KHR_SURFACE_EXTENSION_NAME)) {
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-        extensions.Pick(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);    // Win32
+        extensions.Pick(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-        extensions.Pick(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);  // Android
+        extensions.Pick(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_XCB_KHR
-        extensions.Pick(VK_KHR_XCB_SURFACE_EXTENSION_NAME);      // Linux XCB
+        extensions.Pick(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_XLIB_KHR
-        extensions.Pick(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);     // Linux XLib
+        extensions.Pick(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_WAYLAND_KHR
-        extensions.Pick(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);  // Linux Wayland
+        extensions.Pick(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_MIR_KHR
-        extensions.Pick(VK_KHR_MIR_SURFACE_EXTENSION_NAME);      // Linux Mir
+        extensions.Pick(VK_KHR_MIR_SURFACE_EXTENSION_NAME);
 #endif
     } else LOGE("Failed to load VK_KHR_Surface");
 
@@ -147,21 +149,21 @@ CInstance::CInstance(const bool enableValidation, const char* appName, const cha
     extensions.Print();
 #endif
     assert(extensions.PickCount() >= 2);
-    Create(layers, extensions, appName, engineName);
+    Create(layers, extensions, app_name, engine_name);
 }
 
-CInstance::CInstance(const CLayers& layers, const CExtensions& extensions, const char* appName, const char* engineName) {
-    Create(layers, extensions, appName, engineName);
+CInstance::CInstance(const CLayers& layers, const CExtensions& extensions, const char* app_name, const char* engine_name) {
+    Create(layers, extensions, app_name, engine_name);
 }
 
-void CInstance::Create(const CLayers& layers, const CExtensions& extensions, const char* appName, const char* engineName) {
+void CInstance::Create(const CLayers& layers, const CExtensions& extensions, const char* app_name, const char* engine_name) {
     // initialize the VkApplicationInfo structure
     VkApplicationInfo app_info  = {};
     app_info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pNext              = NULL;
-    app_info.pApplicationName   = appName;
+    app_info.pApplicationName   = app_name;
     app_info.applicationVersion = 1;
-    app_info.pEngineName        = engineName;
+    app_info.pEngineName        = engine_name;
     app_info.engineVersion      = 1;
     app_info.apiVersion         = VK_API_VERSION_1_0;
 
