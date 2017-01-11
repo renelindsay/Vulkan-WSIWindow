@@ -43,7 +43,7 @@ struct INITVULKAN {
 //-------------------------Text Color--------------------------
 void color(eColor color) { // Sets Terminal text color (Win32/Linux)
 #ifdef _WIN32
-           const char bgr[]={7,4,2,6,1,5,3,0, 8,12,10,14,9,13,11,15}; //RGB-to-BGR
+    const char bgr[] = {7,4,2,6,1,5,3,7, 8,12,10,14,9,13,11,15}; //RGB-to-BGR
     HANDLE hConsole  = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, bgr[color]);
 #elif __LINUX__
