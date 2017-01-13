@@ -40,6 +40,13 @@
 
 Please see the [BUILD.md](BUILD.md) file for details on how to build WSI-Window for your target platform.
 
+## Overview
+
+The WSI-Window library has a very modular design.  It consists of a few loosely coupled classes,  
+which can be linked together to quickly get started on your Vulkan application.
+
+![LunarG Logo](./WSIWindow/docs/WSIWindow.png "WSI-Window")
+
 ## Classes
 
 ### WSIWindow class

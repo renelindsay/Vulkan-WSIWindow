@@ -94,10 +94,10 @@ private:
                 settings_.vsync = false;
             } else if (*it == "-w") {
                 ++it;
-                settings_.initial_width = std::stoi(*it);  //stoi fails on Android
+                settings_.initial_width = std::stoi(*it);  // stoi fails on Android
             } else if (*it == "-h") {
                 ++it;
-                settings_.initial_height = std::stoi(*it); //stoi fails on Android
+                settings_.initial_height = std::stoi(*it); // stoi fails on Android
             } else if ((*it == "-v") || (*it == "--validate")) {
                 settings_.validate = true;
             } else if (*it == "-vv") {

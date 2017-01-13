@@ -87,6 +87,7 @@ void color(eColor color);
 //void print(eColor col,const char* format,...);
 #define print(COLOR,...) {color(COLOR); printf(__VA_ARGS__);  color(eRESET);}
 
+// clang-format off
 #ifdef ANDROID
     #include <jni.h>
     #include <android/log.h>
