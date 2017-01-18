@@ -4,9 +4,9 @@ This document contains instructions for building WSI-Window on Linux and Windows
 
 ## Install a Vulkan Driver
 
-Before proceeding, it is strongly recommended that you obtain a Vulkan driver from your graphics hardware vendor and install it.  However, the Intel graphics drivers included with Ubuntu 16.04, do not include the Vulkan ICD. If you have a 4th-gen (Haswell) or newer CPU, you can either compile the [Mesa drivers](https://github.com/mesa3d/mesa) yourself, or install the pre-compiled Mesa Vulkan ICD from the included MesaVulkan.zip file.  
+Before proceeding, it is strongly recommended that you obtain a Vulkan driver from your graphics hardware vendor and install it.  However, the Intel graphics drivers included with Ubuntu 16.04, do not include the Vulkan ICD. If you have a 4th-gen (Haswell) or newer CPU, you can either compile the [Mesa drivers](https://github.com/mesa3d/mesa) yourself, or install the pre-compiled Mesa Vulkan ICD from the included  [MesaVulkan.zip](MesaVulkan.zip "Intel-Mesa Vulkan ICD for Ubuntu 16.04") file.  
 
-Although WSI-Window and its samples can build and run stand-alone, it does not include the Vulkan Validation layers, or SPIR-V compiler.  Therefore it is highly recommended that you also install LunarG's Vulkan SDK, to compile GLSL shaders, and ensure any code changes are properly validated.
+It is also recommended that you install LunarG's Vulkan SDK.  Although WSI-Window and its samples may build and run stand-alone, it does not include the SDK's Validation layers, or SPIR-V compiler.  Installing these, will allow you to modify and re-compile the GLSL shaders, as well as ensure that any code changes are properly validated.
 
 ## Platform Setup
 
@@ -26,12 +26,12 @@ Install the Vulkan SDK, CMake and Visual Studio.
 Use cmake-gui to load the CMakeLists.txt file.  
 Configure CMake settings if needed, and generate the Visual Studio project.  
 Use Visual Studio to open the generated solution.  
+(Alternatively, you may use QtCreator to load and configure the CMakeLists.txt file directly.)
 Set Sample1 as the Startup project.  
 Compile and run the sample project.
 
 ### Linux
-WSIWindow only depends on libraries which are already included in a clean Ubuntu instalation.
-However, a few headers are required for compilation: XCB for Windowing, XKB for Keyboard and XInput2 for Multi-touch(optional).
+A Few headers are required, to compile WSI-Window: XCB for Windowing, XKB for Keyboard input, and XInput2 for Multi-touch(optional).
 
     sudo apt-get install libx11-xcb-dev libxkbcommon-dev libxi-dev
 

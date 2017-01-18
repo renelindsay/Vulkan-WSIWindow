@@ -221,7 +221,7 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
             }
 
             //--Keyboard event handler--
-            void OnKeyEvent(eAction action,uint8_t keycode){
+            void OnKeyEvent(eAction action, uint8_t keycode){
                 printf("Key: %s keycode:%d\n", type[action], keycode);
             }
 
