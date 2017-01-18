@@ -16,6 +16,7 @@ endif()
 #-------------------------------------------------------------------------------------------------
 #---------------------------------------Find glslangValidator-------------------------------------
 if(NOT EXISTS ${GLSLANG_VALIDATOR})
+    find_file(GLSLANG_VALIDATOR glslangValidator DOC "Path to the GLSL-to-SPIRV compiler. (glslangValidator or glslangValidator.exe)")
     find_file(GLSLANG_VALIDATOR glslangValidator     PATH "$ENV{VULKAN_SDK}/bin"    ) # on Linux
     find_file(GLSLANG_VALIDATOR glslangValidator.exe PATH "$ENV{VULKAN_SDK}/Bin") # on Windows
 endif()
