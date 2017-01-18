@@ -27,33 +27,33 @@
 
 #include "WSIWindow.h"
 
-const char* type[]={"up  ","down","move"};
+const char* type[] = {"up  ", "down", "move"};
 
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow{
     //--Mouse event handler--
     void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn){
-        printf("Mouse: %s %d x %d Btn:%d\n",type[action],x,y,btn);
+        printf("Mouse: %s %d x %d Btn:%d\n", type[action], x, y, btn);
     }
 
     //--Keyboard event handler--
     void OnKeyEvent(eAction action, eKeycode keycode){
-        printf("Key: %s keycode:%d\n",type[action],keycode);
+        printf("Key: %s keycode:%d\n", type[action], keycode);
     }
 
     //--Text typed event handler--
     void OnTextEvent(const char* str){
-        printf("Text: %s\n",str);
+        printf("Text: %s\n", str);
     }
 
     //--Window move event handler--
     void OnMoveEvent(int16_t x, int16_t y){
-        printf("Window Move: x=%d y=%d\n",x,y);
+        printf("Window Move: x=%d y=%d\n", x, y);
     }
 
     //--Window resize event handler--
     void OnResizeEvent(uint16_t width, uint16_t height){
-        printf("Window Resize: width=%4d height=%4d\n",width, height);
+        printf("Window Resize: width=%4d height=%4d\n", width, height);
     }
 
     //--Window gained/lost focus--
@@ -63,7 +63,7 @@ class MyWindow : public WSIWindow{
 
     //--Multi-touch event handler--
     void OnTouchEvent(eAction action, float x, float y, uint8_t id){
-        printf("Touch: %s %4.0f x %4.0f Finger id:%d\n",type[action],x,y,id);
+        printf("Touch: %s %4.0f x %4.0f Finger id:%d\n",type[action], x, y, id);
     }
 
     void OnCloseEvent(){
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]){
 
     Window.ShowKeyboard(true);                                // Show soft-keyboard (Android)
     LOGW("Test Warnings\n");
-    Window.SetWinPos(0,0);
+    Window.SetWinPos(0, 0);
 
     while(Window.ProcessEvents()){                            // Main event loop, runs until window is closed.
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);
