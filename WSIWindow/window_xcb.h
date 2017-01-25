@@ -139,6 +139,7 @@ Window_xcb::Window_xcb(const char* title, uint width, uint height) {
     //-------------------
     
     //----XLib + XCB----
+    XInitThreads(); // Required by Vulkan, when using XLib. (Vulkan spec section: 30.2.6 Xlib Platform)
     display = XOpenDisplay(NULL);                 assert(display && "Failed to open Display");        // for XLIB functions
     xcb_connection = XGetXCBConnection(display);  assert(display && "Failed to open XCB connection"); // for XCB functions
     const xcb_setup_t*   setup = xcb_get_setup(xcb_connection);
