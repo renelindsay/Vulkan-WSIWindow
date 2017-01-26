@@ -81,8 +81,8 @@
     #define cTICK "\u2713"
 #endif
 
-enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,     //faint colors
-              eFAINT,eBRED,eBGREEN,eBYELLOW,eBBLUE,eBMAGENTA,eBCYAN, eBRIGHT };  //bright colors
+enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,     // normal colors
+              eFAINT,eBRED,eBGREEN,eBYELLOW,eBBLUE,eBMAGENTA,eBCYAN, eBRIGHT };  // bright colors
 void color(eColor color);
 //void print(eColor col,const char* format,...);
 #define print(COLOR,...) {color(COLOR); printf(__VA_ARGS__);  color(eRESET);}

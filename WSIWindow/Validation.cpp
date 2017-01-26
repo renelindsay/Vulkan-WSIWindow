@@ -32,7 +32,7 @@
 struct INITVULKAN {
     INITVULKAN() {
         bool success = (InitVulkan() == 1); // Returns true if this device supports Vulkan.
-        LOG("Initialize Vulkan: ");
+        printf("Initialize Vulkan: ");
         print(success ? eGREEN : eRED, success ? "SUCCESS\n" : "FAILED (Vulkan driver not found.)\n");
     }
 } INITVULKAN; // Run this function BEFORE main.
@@ -47,8 +47,9 @@ void color(eColor color) { // Sets Terminal text color (Win32/Linux)
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, bgr[color]);
 #elif __LINUX__
-    printf("\033[%dm", (color & 8) ? 1 : 0);   // faint or normal
-    if (color) printf("\033[3%dm", color & 7); // set text color
+    if (color==eFAINT){ printf("\033[37m\033[2m"); return; } // set faint white
+    printf("\033[%dm", (color & 8) ? 1 : 0);                 // bright or normal
+    if (color) printf("\033[3%dm", color & 7);               // set text color
 #endif
 }
 //-------------------------------------------------------------
@@ -162,10 +163,10 @@ void CDebugReport::Destroy() {
 void CDebugReport::Print() { // print the state of the report flags
     printf("Debug Report flags : [");
     if(flags&  1) { print(eGREEN, "INFO:1 |"); } else { print(eFAINT, "info:0 |"); }
-    if(flags&  2) { print(eYELLOW,"WARN:1 |"); } else { print(eFAINT, "warn:0 |"); }
-    if(flags&  4) { print(eCYAN,  "PERF:1 |"); } else { print(eFAINT, "perf:0 |"); }
-    if(flags&  8) { print(eRED,   "ERROR:1|"); } else { print(eFAINT, "error:0|"); }
-    if(flags& 16) { print(eBLUE,  "DEBUG:1" ); } else { print(eFAINT, "debug:0" ); }
+    if(flags&  2) { print(eYELLOW,"WARN:2 |"); } else { print(eFAINT, "warn:0 |"); }
+    if(flags&  4) { print(eCYAN,  "PERF:4 |"); } else { print(eFAINT, "perf:0 |"); }
+    if(flags&  8) { print(eRED,   "ERROR:8|"); } else { print(eFAINT, "error:0|"); }
+    if(flags& 16) { print(eBLUE,  "DEBUG:16"); } else { print(eFAINT, "debug:0" ); }
     print(eRESET,"] = %d\n",flags);
 }
 #else   // No Validation
