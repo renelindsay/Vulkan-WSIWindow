@@ -26,8 +26,9 @@
 */
 
 #include "WSIWindow.h"
+#include "CDevices.h"
 
-const char* type[] = {"up  ", "down", "move"};
+const char* type[]{"up  ", "down", "move"};
 
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow{
@@ -75,8 +76,16 @@ int main(int argc, char *argv[]){
     setvbuf(stdout, NULL, _IONBF, 0);                         // Prevent printf buffering in QtCreator
     printf("WSI-Window\n");
 
-    CInstance inst(true);                                     // Create a Vulkan Instance
-    inst.DebugReport.SetFlags(31);                            // Select message types
+    CInstance inst(false);                                     // Create a Vulkan Instance
+    //inst.DebugReport.SetFlags(14);                            // Select message types
+    inst.DebugReport.SetFlags(0);                            // Select message types
+
+    CDevices devices(inst);
+    devices.Print();
+    CPhysicalDevice device = devices[0];
+    device.extensions.Print();
+    device.CreateDevice();
+
 
     MyWindow Window;                                          // Create a Vulkan window
     Window.SetTitle("WSI-Window Sample1");                    // Set the window title
