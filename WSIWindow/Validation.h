@@ -148,7 +148,6 @@ void color(eColor color);
 #endif
 //======================================================================================================
 
-const char* VkResultStr(VkResult err); // Convert vulkan result code to a string.
 void ShowVkResult(VkResult err);       // Print warnings and errors.
 
 //============================================ CDebugReport ============================================

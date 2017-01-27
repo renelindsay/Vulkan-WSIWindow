@@ -24,13 +24,7 @@
 namespace vk {
 
 inline VkResult assert_success(VkResult res) {
-#ifdef __ANDROID__
     VKERRCHECK(res);
-#else
-    if (res != VK_SUCCESS) {
-        throw std::runtime_error(VkResultStr(res));
-    }
-#endif
     return res;
 }
 

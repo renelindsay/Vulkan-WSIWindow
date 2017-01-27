@@ -97,6 +97,8 @@ void ShowVkResult(VkResult err) {
     if (err > 0) _LOGW("%s ", VkResultStr(err)); // Print warning
     if (err < 0) _LOGE("%s ", VkResultStr(err)); // Print error
 }
+#else
+void ShowVkResult(VkResult err){}
 #endif
 //----------------------------------------------------------------
 // clang-format off
