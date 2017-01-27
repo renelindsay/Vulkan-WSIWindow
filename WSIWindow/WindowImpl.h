@@ -59,19 +59,32 @@ class EventFIFO {
 
   public:
     EventFIFO() : head(0),tail(0){}
-    bool isEmpty() { return head == tail; }                                              // Check if queue is empty.
-    void push(EventType const& item) { ++head; buf[head %= SIZE] = item; }               // Add item to queue
-    EventType* pop() { if (head == tail) return 0; ++tail; return &buf[tail %= SIZE]; }  // Returns item ptr, or null if queue is empty
+    bool isEmpty() { return head == tail; }                                             // Check if queue is empty.
+    void push(EventType const& item) { ++head; buf[head %= SIZE] = item; }              // Add item to queue
+    EventType* pop() { if (head == tail) return 0; ++tail; return &buf[tail %= SIZE]; } // Returns item ptr, or 0 if queue is empty
 };
 //==============================================================
 //=========================MULTI-TOUCH==========================
 class CMTouch{
     struct CPointer{bool active; float x; float y;};
-  public:
-    static const int MAX_POINTERS = 10; // Max 10 fingers
-    int count;
+    static const int  MAX_POINTERS = 10; // Max 10 fingers
+    uint32_t touchID [MAX_POINTERS];     // finger-id lookup table (Desktop)
     CPointer Pointers[MAX_POINTERS];
+  public:
+
+    int count; // number of active touch-id's (Android only)
     void Clear() { memset(this, 0, sizeof(*this)); }
+
+    // Convert desktop-style touch-id's to an android-style finger-id.
+    EventType Event_by_ID(eAction action, float x, float y, uint32_t findval, uint32_t setval) {
+        for(uint32_t i = 0; i < MAX_POINTERS; ++i){  // lookup finger-id
+            if (touchID[i] == findval){
+                touchID[i] = setval;
+                return Event(action,x, y, i);
+            }
+        }
+        return {EventType::UNKNOWN};
+    }
 
     EventType Event(eAction action, float x, float y, uint8_t id) {
         if (id >= MAX_POINTERS) return {}; // Exit if too many fingers

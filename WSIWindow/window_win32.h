@@ -56,10 +56,7 @@ class Window_win32 : public WindowImpl {
     HWND hWnd;
     // bool ShapeMode;
 
-    //---Touch Device---
-    CMTouch MTouch;
-    uint32_t touchID[CMTouch::MAX_POINTERS] = {};
-    //------------------
+    CMTouch MTouch;  // Multi-Touch device
 
     void SetTitle(const char* title);
     void SetWinPos (uint x, uint y);
@@ -240,23 +237,9 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
                     POINT pt = pointerInfo.ptPixelLocation;
                     ScreenToClient(hWnd, &pt);
                     switch (msg.message) {
-                        case WM_POINTERDOWN: {
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == 0){        //Find first empty slot
-                                touchID[i] = id;                                        //Claim slot
-                                return MTouch.Event(eDOWN,x,y,i);                       //touch down event
-                            }
-                        }
-                        case WM_POINTERUPDATE: {
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == id){       //Find first empty slot
-                                return MTouch.Event(eMOVE,x,y,i);                       //touch move event
-                            }
-                        }
-                        case WM_POINTERUP: {
-                            forCount(CMTouch::MAX_POINTERS) if(touchID[i] == id){       //Find first empty slot
-                                touchID[i] = 0;                                         //Clear slot
-                                return MTouch.Event(eUP  ,x,y,i);                       //touch up event
-                            }
-                        }
+                        case WM_POINTERDOWN  : return MTouch.Event_by_ID(eDOWN, x, y,  0, id); // touch down event
+                        case WM_POINTERUPDATE: return MTouch.Event_by_ID(eMOVE, x, y, id, id); // touch move event
+                        case WM_POINTERUP    : return MTouch.Event_by_ID(eUP  , x, y, id,  0); // touch up event
                     }
                 }
             }

@@ -85,6 +85,7 @@ const unsigned char EVDEV_TO_HID[256] = {
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
+
 // clang-format on
 //=============================XCB==============================
 class Window_xcb : public WindowImpl {
@@ -102,7 +103,6 @@ class Window_xcb : public WindowImpl {
     CMTouch MTouch;
     int xi_opcode; // 131
     int xi_devid;  // 2
-    uint32_t touchID[CMTouch::MAX_POINTERS] = {};
     //------------------
 
     void SetTitle(const char* title);
@@ -328,35 +328,20 @@ EventType Window_xcb::TranslateEvent(xcb_generic_event_t* x_event) {
         case XCB_FOCUS_IN  : if (!has_focus) return FocusEvent(true);        // window gained focus
         case XCB_FOCUS_OUT : if ( has_focus) return FocusEvent(false);       // window lost focus
 
-        case XCB_GE_GENERIC: {                                                     //Multi touch screen events
+        case XCB_GE_GENERIC: {                                               // Multi touch screen events
 #ifdef ENABLE_MULTITOUCH
             xcb_input_touch_begin_event_t& te = *(xcb_input_touch_begin_event_t*)x_event;
             if(te.extension == xi_opcode){ // check if this event is from the touch device
                 float x = te.event_x / 65536.f;
                 float y = te.event_y / 65536.f;
+                uint id = te.detail;
+
                 switch(te.event_type){
-                    case XI_TouchBegin: {
-                        forCount(CMTouch::MAX_POINTERS) if (touchID[i] == 0){       // Find first empty slot
-                            touchID[i] = te.detail;                                 // Claim slot
-                            return MTouch.Event(eDOWN, x, y, i);                    // touch down event
-                        }
-                        break;
-                    }
-                    case XI_TouchUpdate: {
-                        forCount(CMTouch::MAX_POINTERS) if (touchID[i] == te.detail){ // Find finger id
-                            return MTouch.Event(eMOVE,x, y, i);                       // Touch move event
-                        }
-                        break;
-                    }
-                    case XI_TouchEnd   : {
-                        forCount(CMTouch::MAX_POINTERS) if (touchID[i] == te.detail){ // Find finger id
-                            touchID[i] = 0;                                           // Clear the slot
-                            return MTouch.Event(eUP, x, y, i);                        // Touch up event
-                        }
-                        break;
-                    }
-                    default: break;
-                } // switch te
+                    case XI_TouchBegin : return MTouch.Event_by_ID(eDOWN, x, y,  0, id); // touch down event
+                    case XI_TouchUpdate: return MTouch.Event_by_ID(eMOVE, x, y, id, id); // touch move event
+                    case XI_TouchEnd   : return MTouch.Event_by_ID(eUP  , x, y, id,  0); // touch up event
+                    default : break;
+                }
             }
 #endif
             return {EventType::UNKNOWN};
