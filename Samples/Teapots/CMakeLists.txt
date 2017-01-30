@@ -1,10 +1,10 @@
 project(Teapots)
 cmake_minimum_required(VERSION 2.8)
-add_definitions(-std=c++11)
 #-------------------------------------------------------------------------------------------------
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_definitions(-DVK_USE_PLATFORM_XCB_KHR)
+    add_definitions(-std=c++11)
 endif()
 if(WIN32)
     add_definitions(-DVK_USE_PLATFORM_WIN32_KHR)
@@ -17,7 +17,7 @@ endif()
 #---------------------------------------Find glslangValidator-------------------------------------
 if(NOT EXISTS ${GLSLANG_VALIDATOR})
     find_file(GLSLANG_VALIDATOR glslangValidator DOC "Path to the GLSL-to-SPIRV compiler. (glslangValidator or glslangValidator.exe)")
-    find_file(GLSLANG_VALIDATOR glslangValidator     PATH "$ENV{VULKAN_SDK}/bin"    ) # on Linux
+    find_file(GLSLANG_VALIDATOR glslangValidator     PATH "$ENV{VULKAN_SDK}/bin") # on Linux
     find_file(GLSLANG_VALIDATOR glslangValidator.exe PATH "$ENV{VULKAN_SDK}/Bin") # on Windows
 endif()
 #------------------------------------------GLSL to SPIRV------------------------------------------

@@ -6,7 +6,6 @@ file(GLOB SRC_LIST "*.h" "*.cpp")                   # List all source files from
 add_library (${LIBRARY_NAME} STATIC ${SRC_LIST})    # and add them to the WSIWindow library.
 target_include_directories (${LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_definitions(-std=c++11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")  #for find_package
 
 #=========================VULKAN_WRAPPER==========================
@@ -37,6 +36,7 @@ endif()
 #=================================================================
 #==============================LINUX==============================
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_definitions(-std=c++11)
     set(BUILD_WSI_XCB_SUPPORT ON)  #Other options are not yet supported.
     #option(BUILD_WSI_XCB_SUPPORT     "Build XCB WSI support"      ON)
     #option(BUILD_WSI_XLIB_SUPPORT    "Build Xlib WSI support"    OFF)
