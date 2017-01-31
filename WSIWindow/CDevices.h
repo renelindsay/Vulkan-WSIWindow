@@ -5,12 +5,26 @@
 
 //-------------------------CQueueFamilies-------------------------
 
-//struct CQueueFamily{
-//    VkQueueFamilyProperties properties;
+struct CQueueFamily{
+    VkQueueFamilyProperties properties;
+    operator VkQueueFamilyProperties() { return properties; }
 //    void Print();
-//};
+};
+
+class CQueueFamilies{
+    friend class CDevices;
+    //void Init(VkPhysicalDevice gpu);
+    vector<CQueueFamily> family_list;
+public:
+    uint32_t Count(){return (uint32_t) family_list.size();}
+    CQueueFamily operator [](const int i) const { return family_list[i]; }
+    void Print();
+};
 
 
+//----------------------------------------------------------------
+
+/*
 class CQueueFamilies{
     friend class CDevices;
     //void Init(VkPhysicalDevice gpu);
@@ -20,8 +34,8 @@ public:
     VkQueueFamilyProperties operator [](const int i) const { return family_list[i]; }
     void Print();
 };
-
-
+*/
+//----------------------------------------------------------------
 //------------------------CPhysicalDevice-------------------------
 
 struct CPhysicalDevice{

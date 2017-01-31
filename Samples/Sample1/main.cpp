@@ -84,6 +84,7 @@ int main(int argc, char *argv[]){
     devices.Print();
     CPhysicalDevice device = devices[0];
     device.extensions.Print();
+    device.queue_families.Print();
     device.CreateDevice();
 
 

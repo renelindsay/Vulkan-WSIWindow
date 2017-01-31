@@ -18,15 +18,16 @@ void CQueueFamilies::Print(){
     printf("\t   Queue Families: %d\n",Count());
     for(uint i=0; i<Count();++i){
         VkQueueFamilyProperties props = family_list[i];
-        const uint32_t     count=props.queueCount;
-        const VkQueueFlags flags=props.queueFlags;
+        const uint32_t     count = props.queueCount;
+        const VkQueueFlags flags = props.queueFlags;
         printf("\t        %d:\t",i);
         printf("Queue count = %d\n",count);
-        const char* sep="\t\tFlags (";
-        if(flags&1){ printf(" %s GRAPHICS",sep); sep="|";}
-        if(flags&2){ printf(" %s COMPUTE ",sep); sep="|";}
-        if(flags&4){ printf(" %s TRANSFER",sep); sep="|";}
-        if(flags&8){ printf(" %s SPARSE"  ,sep);         }
+        printf("\t\tFlags (");
+        const char* sep="";
+        if(flags&1){ printf("%s GRAPHICS ",sep); sep="|";}
+        if(flags&2){ printf("%s COMPUTE " ,sep); sep="|";}
+        if(flags&4){ printf("%s TRANSFER ",sep); sep="|";}
+        if(flags&8){ printf("%s SPARSE "  ,sep);         }
         printf(" ) = %d\n", flags);
 
         VkExtent3D min=props.minImageTransferGranularity;
@@ -129,14 +130,37 @@ CDevices::CDevices(VkInstance instance){
         device.extensions.Pick(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
         // device.queue_families.Init(device.handle);
+
+        //--Get Queue Families--
+        uint family_count=0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &family_count, NULL);
+        vector<VkQueueFamilyProperties> family_list(family_count);
+        vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &family_count, family_list.data());
+
+        device.queue_families.family_list.resize(family_count);
+        for(uint i=0; i<family_count; ++i){
+            device.queue_families.family_list[i].properties=family_list[i];
+            device.queue_families.family_list[i].properties.queueCount=99;
+        }
+
+        //----------------------
+
+
+/*
         //--Get Queue Families--
         uint dev_count=0;
         auto& q_families = device.queue_families.family_list;
         vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &dev_count, NULL);
         assert(dev_count > 0 && "No queue families found.");
+
+        //vector<VkQueueFamilyProperties> family_list();
+
+
         q_families.resize(dev_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &dev_count, q_families.data());
+        //vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &dev_count, q_families.data());
+        vkGetPhysicalDeviceQueueFamilyProperties(device.handle, &dev_count, &q_families[0].properties);
         //----------------------
+*/
     }
 }
 
