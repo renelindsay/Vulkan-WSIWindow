@@ -28,7 +28,7 @@
 //--Events--
 EventType WindowImpl::MouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn) {
     mousepos                           = {x, y};
-    if (action != eMOVE) btnstate[btn] = (action == eDOWN); // Keep track of button state
+    if (action != eMOVE) btnstate[btn] = (action == eDOWN);  // Keep track of button state
     EventType e                        = {EventType::MOUSE, {action, x, y, btn}};
     return e;
 }
@@ -77,7 +77,7 @@ EventType WindowImpl::CloseEvent() {
 
 void WindowImpl::TextInput(bool enabled) { textinput = enabled; }
 
-bool CSurface::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) {
+bool CSurface::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) const {
     VkBool32 can_present = false;
     VKERRCHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, queue_family, surface, &can_present));
     return !!can_present;

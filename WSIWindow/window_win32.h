@@ -27,7 +27,7 @@
 #define WINDOW_WIN32
 
 #include "WindowImpl.h"
-#include <windowsx.h> //   Mouse
+#include <windowsx.h>  // Mouse
 //#pragma warning(disable:4996)
 // clang-format off
 // Convert native Win32 keyboard scancode to cross-platform USB HID code.
@@ -62,11 +62,12 @@ class Window_win32 : public WindowImpl {
     void SetWinPos (uint x, uint y);
     void SetWinSize(uint w, uint h);
     void CreateSurface(VkInstance instance);
+
   public:
     Window_win32(const char* title, uint width, uint height);
     virtual ~Window_win32();
     EventType GetEvent(bool wait_for_event = false);
-    bool CanPresent(VkPhysicalDevice phy, uint32_t queue_family); // check if this window can present this queue type
+    bool CanPresent(VkPhysicalDevice phy, uint32_t queue_family);  // check if this window can present this queue type
 };
 //==============================================================
 #endif
@@ -105,16 +106,16 @@ Window_win32::Window_win32(const char* title, uint width, uint height) {
     RECT wr = {0, 0, (LONG)width, (LONG)height};
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
     hWnd = CreateWindowEx(0,
-                          title,                                         // class name
-                          title,                                         // app name
-                          WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPEDWINDOW, // window style
-                          100, 100,                                      // x/y coords
-                          wr.right - wr.left,                            // width
-                          wr.bottom - wr.top,                            // height
-                          NULL,                                          // handle to parent
-                          NULL,                                          // handle to menu
-                          hInstance,                                     // hInstance
-                          NULL);                                         // no extra parameters
+                          title,                                          // class name
+                          title,                                          // app name
+                          WS_VISIBLE | WS_SYSMENU | WS_OVERLAPPEDWINDOW,  // window style
+                          100, 100,                                       // x/y coords
+                          wr.right - wr.left,                             // width
+                          wr.bottom - wr.top,                             // height
+                          NULL,                                           // handle to parent
+                          NULL,                                           // handle to menu
+                          hInstance,                                      // hInstance
+                          NULL);                                          // no extra parameters
     assert(hWnd && "Failed to create a window.");
 
     eventFIFO.push(ResizeEvent(width, height));
@@ -124,18 +125,18 @@ Window_win32::~Window_win32() { DestroyWindow(hWnd); }
 
 void Window_win32::SetTitle(const char* title) { SetWindowText(hWnd, title); }
 
-void Window_win32::SetWinPos (uint x, uint y){
+void Window_win32::SetWinPos(uint x, uint y) {
     SetWindowPos(hWnd, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
-    if (x != shape.x || y != shape.y) eventFIFO.push(MoveEvent(x, y)); // Trigger window moved event
+    if (x != shape.x || y != shape.y) eventFIFO.push(MoveEvent(x, y));  // Trigger window moved event
 }
 
-void Window_win32::SetWinSize(uint w, uint h){
+void Window_win32::SetWinSize(uint w, uint h) {
     RECT wr = {0, 0, (LONG)w, (LONG)h};
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);  // Add border size to create desired client area size
-    int total_width=wr.right - wr.left;
-    int total_height=wr.bottom - wr.top;
+    int total_width = wr.right - wr.left;
+    int total_height = wr.bottom - wr.top;
     SetWindowPos(hWnd, NULL, 0, 0, total_width, total_height, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
-    if((w!=shape.width) | (h!=shape.height)) eventFIFO.push(ResizeEvent(w, h)); // Trigger resize event
+    if ((w != shape.width) | (h != shape.height)) eventFIFO.push(ResizeEvent(w, h));  // Trigger resize event
 }
 
 void Window_win32::CreateSurface(VkInstance instance) {
@@ -159,8 +160,8 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
     if (!eventFIFO.isEmpty()) return *eventFIFO.pop();
 
     MSG msg = {};
-    if(wait_for_event) running = (GetMessage(&msg, NULL, 16, 0)>0);             // Blocking mode
-    else               running = (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)>0);  // Non-blocking mode
+    if (wait_for_event) running = (GetMessage(&msg, NULL, 16, 0) > 0);             // Blocking mode
+    else                running = (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0);  // Non-blocking mode
     
     if (running) {
         TranslateMessage(&msg);
@@ -181,7 +182,7 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
         //-----------------------------------------------------------------------------------------------------------------
 
         static char buf[4] = {};
-        uint8_t bestBtn = BtnState(1) ? 1 : BtnState(2) ? 2 :BtnState(3) ? 3 : 0;
+        uint8_t bestBtn = BtnState(1) ? 1 : BtnState(2) ? 2 : BtnState(3) ? 3 : 0;
         switch (msg.message) {
             //--Mouse events--
             case WM_MOUSEMOVE  : return MouseEvent(eMOVE, x, y, bestBtn);
@@ -206,7 +207,7 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
             case WM_SYSKEYUP  : return KeyEvent(eUP  , WIN32_TO_HID[msg.wParam]);   // +alt key
 
             //--Char event--
-            case WM_CHAR: { strncpy_s(buf, (const char*)&msg.wParam, 4);  return TextEvent(buf); } //return UTF8 code of key pressed
+            case WM_CHAR: { strncpy_s(buf, (const char*)&msg.wParam, 4);  return TextEvent(buf); }  // return UTF8 code of key pressed
             //--Window events--
             case WM_ACTIVE: { return FocusEvent(msg.wParam != WA_INACTIVE); }
 
@@ -216,30 +217,31 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
                     return FocusEvent(true);                                // Activate window before reshape
                 }
 
-                RECT r; GetClientRect(hWnd, &r);
+                RECT r;
+                GetClientRect(hWnd, &r);
                 uint16_t w = (uint16_t)(r.right - r.left);
                 uint16_t h = (uint16_t)(r.bottom - r.top);
-                if (w != shape.width || h != shape.height) return ResizeEvent(w, h); // window resized
+                if (w != shape.width || h != shape.height) return ResizeEvent(w, h);  // window resized
 
                 GetWindowRect(hWnd, &r);
                 int16_t x = (int16_t)r.left;
                 int16_t y = (int16_t)r.top;
-                if (x != shape.x || y != shape.y) return MoveEvent(x, y); // window moved
+                if (x != shape.x || y != shape.y) return MoveEvent(x, y);  // window moved
             }
             case WM_CLOSE: { LOGI("WM_CLOSE\n");  return CloseEvent(); }
 #ifdef ENABLE_MULTITOUCH
             case WM_POINTERUPDATE:
-            case WM_POINTERDOWN  :
-            case WM_POINTERUP    :{
+            case WM_POINTERDOWN:
+            case WM_POINTERUP: {
                 POINTER_INFO pointerInfo;
                 if (GetPointerInfo(GET_POINTERID_WPARAM(msg.wParam), &pointerInfo)) {
                     uint  id = pointerInfo.pointerId;
                     POINT pt = pointerInfo.ptPixelLocation;
                     ScreenToClient(hWnd, &pt);
                     switch (msg.message) {
-                        case WM_POINTERDOWN  : return MTouch.Event_by_ID(eDOWN, x, y,  0, id); // touch down event
-                        case WM_POINTERUPDATE: return MTouch.Event_by_ID(eMOVE, x, y, id, id); // touch move event
-                        case WM_POINTERUP    : return MTouch.Event_by_ID(eUP  , x, y, id,  0); // touch up event
+                        case WM_POINTERDOWN  : return MTouch.Event_by_ID(eDOWN, x, y,  0, id);  // touch down event
+                        case WM_POINTERUPDATE: return MTouch.Event_by_ID(eMOVE, x, y, id, id);  // touch move event
+                        case WM_POINTERUP    : return MTouch.Event_by_ID(eUP  , x, y, id,  0);  // touch up event
                     }
                 }
             }
@@ -253,7 +255,7 @@ EventType Window_win32::GetEvent(bool wait_for_event) {
 // MS-Windows event handling function:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
-    case WM_CLOSE:
+        case WM_CLOSE:
             PostMessage(hWnd, WM_CLOSE, 0, 0);  // for OnCloseEvent
             return 0;
         case WM_DESTROY:
@@ -263,7 +265,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_PAINT:
             // printf("WM_PAINT\n");
             return 0;
-        case WM_GETMINMAXINFO:     // set window's minimum size
+        case WM_GETMINMAXINFO:  // set window's minimum size
             // ((MINMAXINFO*)lParam)->ptMinTrackSize = demo.minsize;
             return 0;
         case WM_EXITSIZEMOVE : { PostMessage(hWnd, WM_RESHAPE, 0, 0);          break; }
@@ -278,5 +280,5 @@ bool Window_win32::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) {
     return vkGetPhysicalDeviceWin32PresentationSupportKHR(gpu, queue_family) == VK_TRUE;
 }
 
-#endif // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VK_USE_PLATFORM_WIN32_KHR
 //==============================================================

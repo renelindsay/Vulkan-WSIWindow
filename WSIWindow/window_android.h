@@ -28,7 +28,7 @@
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 
 #include "WindowImpl.h"
-#include "native.h" //for Android_App
+#include "native.h"  // for Android_App
 
 #ifndef WINDOW_ANDROID
 #define WINDOW_ANDROID
@@ -60,7 +60,7 @@ class Window_android : public WindowImpl {
     android_app* app = 0;
     CMTouch MTouch;
 
-    void SetTitle(const char* title){}; // TODO : Set window title?
+    void SetTitle(const char* title){};  // TODO : Set window title?
     void SetWinPos (uint x, uint y){};
     void SetWinSize(uint w, uint h){};
     bool CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) { return true; }
@@ -79,8 +79,8 @@ class Window_android : public WindowImpl {
 
   public:
     Window_android(const char* title, uint width, uint height) {
-        shape.width  = 0; // width;
-        shape.height = 0; // height;
+        shape.width  = 0;  // width;
+        shape.height = 0;  // height;
         running      = true;
         // printf("Creating Android-Window...\n");
         app = Android_App;
@@ -103,7 +103,7 @@ class Window_android : public WindowImpl {
                 android_app_post_exec_cmd(app, cmd);
             }
         }
-        ALooper_pollAll(10, NULL, NULL, NULL); // for keyboard
+        ALooper_pollAll(10, NULL, NULL, NULL);  // for keyboard
         //--------------------------------------------------
     };
 
@@ -111,8 +111,8 @@ class Window_android : public WindowImpl {
 
     EventType GetEvent(bool wait_for_event = false) {
         EventType event    = {};
-        static char buf[4] = {};                           // store char for text event
-        if (!eventFIFO.isEmpty()) return *eventFIFO.pop(); // pop message from message queue buffer
+        static char buf[4] = {};                            // store char for text event
+        if (!eventFIFO.isEmpty()) return *eventFIFO.pop();  // pop message from message queue buffer
 
         int events = 0;
         struct android_poll_source* source;
@@ -128,9 +128,9 @@ class Window_android : public WindowImpl {
             android_app_pre_exec_cmd(app, cmd);
             if (app->onAppCmd != NULL) app->onAppCmd(app, cmd);
             switch (cmd) {
-            case APP_CMD_GAINED_FOCUS: event = FocusEvent(true); break;
-            case APP_CMD_LOST_FOCUS: event   = FocusEvent(false); break;
-            default: break;
+                case APP_CMD_GAINED_FOCUS: event = FocusEvent(true);  break;
+                case APP_CMD_LOST_FOCUS  : event = FocusEvent(false); break;
+                default: break;
             }
             android_app_post_exec_cmd(app, cmd);
             return event;
@@ -143,7 +143,7 @@ class Window_android : public WindowImpl {
                 if (app->onInputEvent != NULL) handled = app->onInputEvent(app, a_event);
 
                 int32_t type = AInputEvent_getType(a_event);
-                if (type == AINPUT_EVENT_TYPE_KEY) { // KEYBOARD
+                if (type == AINPUT_EVENT_TYPE_KEY) {  // KEYBOARD
                     int32_t a_action = AKeyEvent_getAction(a_event);
                     int32_t keycode  = AKeyEvent_getKeyCode(a_event);
                     uint8_t hidcode  = ANDROID_TO_HID[keycode];
@@ -153,12 +153,12 @@ class Window_android : public WindowImpl {
                         int metaState = AKeyEvent_getMetaState(a_event);
                         int unicode   = GetUnicodeChar(AKEY_EVENT_ACTION_DOWN, keycode, metaState);
                         (int&)buf     = unicode;
-                        event = KeyEvent(eDOWN, hidcode);           // key pressed event (returned on this run)
-                        if (buf[0]) eventFIFO.push(TextEvent(buf)); // text typed event  (store in FIFO for next run)
+                        event = KeyEvent(eDOWN, hidcode);            // key pressed event (returned on this run)
+                        if (buf[0]) eventFIFO.push(TextEvent(buf));  // text typed event  (store in FIFO for next run)
                         break;
                     }
                     case AKEY_EVENT_ACTION_UP: {
-                        event = KeyEvent(eUP, hidcode);             // key released event
+                        event = KeyEvent(eUP, hidcode);              // key released event
                         break;
                     }
                     default: break;
@@ -169,7 +169,7 @@ class Window_android : public WindowImpl {
                     int action       = (a_action & 255); // get action-code from bottom 8 bits
                     MTouch.count     = (int)AMotionEvent_getPointerCount(a_event);
                     if (action == AMOTION_EVENT_ACTION_MOVE) {
-                        forCount(MTouch.count) {
+                        repeat(MTouch.count) {
                             uint8_t finger_id = (uint8_t)AMotionEvent_getPointerId(a_event, i);
                             float x           = AMotionEvent_getX(a_event, i);
                             float y           = AMotionEvent_getY(a_event, i);
@@ -182,10 +182,10 @@ class Window_android : public WindowImpl {
                         float y           = AMotionEvent_getY(a_event, inx);
                         switch (action) {
                             case AMOTION_EVENT_ACTION_POINTER_DOWN:
-                            case AMOTION_EVENT_ACTION_DOWN      :  event=MTouch.Event(eDOWN,x,y,finger_id);  break;
+                            case AMOTION_EVENT_ACTION_DOWN      :  event = MTouch.Event(eDOWN, x, y, finger_id);  break;
                             case AMOTION_EVENT_ACTION_POINTER_UP:
-                            case AMOTION_EVENT_ACTION_UP        :  event=MTouch.Event(eUP  ,x,y,finger_id);  break;
-                            case AMOTION_EVENT_ACTION_CANCEL    :  MTouch.Clear();                           break;
+                            case AMOTION_EVENT_ACTION_UP        :  event = MTouch.Event(eUP  , x, y, finger_id);  break;
+                            case AMOTION_EVENT_ACTION_CANCEL    :  MTouch.Clear();                                break;
                             default:break;
                         }
                     }
@@ -200,7 +200,7 @@ class Window_android : public WindowImpl {
                 return event;
             }
 
-        } // else if (id == LOOPER_ID_USER) { }
+        }  // else if (id == LOOPER_ID_USER) { }
 
         // Check if we are exiting.
         if (app->destroyRequested) {
@@ -220,5 +220,5 @@ class Window_android : public WindowImpl {
 
 #endif
 
-#endif // VK_USE_PLATFORM_ANDROID_KHR
+#endif  // VK_USE_PLATFORM_ANDROID_KHR
 //==============================================================

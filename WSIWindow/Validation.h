@@ -33,7 +33,7 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 
-#if defined(__linux__) && !defined(__ANDROID__) // Linux (desktop only)
+#if defined(__linux__) && !defined(__ANDROID__)  // Linux (desktop only)
 #define __LINUX__ 1
 #endif
 
@@ -57,10 +57,10 @@
 #ifdef NDEBUG                           // In release builds, don't print VkResult strings.
 #define VKERRCHECK(VKFN) { (void)VKFN; }
 #else                                   // In debug builds, show warnings and errors. assert on error.
-#define VKERRCHECK(VKFN) { VkResult VKRESULT = VKFN;                          \
-                           ShowVkResult(VKRESULT);                            \
-                           assert(VKRESULT >= 0);                             \
-                           if(VKRESULT) printf("%s:%d\n",__FILE__,__LINE__);  \
+#define VKERRCHECK(VKFN) { VkResult VKRESULT = VKFN;                            \
+                           ShowVkResult(VKRESULT);                              \
+                           assert(VKRESULT >= 0);                               \
+                           if (VKRESULT) printf("%s:%d\n", __FILE__, __LINE__); \
                          }
 #endif
 //======================================================================================================
@@ -72,7 +72,7 @@
 
 #ifdef _WIN32
     #include <Windows.h>
-    #define cTICK "\xFB"    /* On Windows, use Square-root as tick mark */
+    #define cTICK "\xFB" /* On Windows, use Square-root as tick mark */
 #elif __ANDROID__
     #include <native.h>
     #define cTICK "\u2713"
@@ -84,8 +84,8 @@
 enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,     // normal colors
               eFAINT,eBRED,eBGREEN,eBYELLOW,eBBLUE,eBMAGENTA,eBCYAN, eBRIGHT };  // bright colors
 void color(eColor color);
-//void print(eColor col,const char* format,...);
-#define print(COLOR,...) {color(COLOR); printf(__VA_ARGS__);  color(eRESET);}
+// void print(eColor col,const char* format,...);
+#define print(COLOR,...) { color(COLOR); printf(__VA_ARGS__);  color(eRESET); }
 
 // clang-format off
 #ifdef ANDROID
@@ -142,13 +142,13 @@ void color(eColor color);
 //#define USE_VULKAN_WRAPPER
 
 #ifdef USE_VULKAN_WRAPPER
-#include <vulkan_wrapper.h> // PC: Build dispatch table, so we can skip loader trampoline-code
+#include <vulkan_wrapper.h>  // PC: Build dispatch table, so we can skip loader trampoline-code
 #else
-#include <vulkan/vulkan.h>  // Android: This must be included AFTER native.h
+#include <vulkan/vulkan.h>   // Android: This must be included AFTER native.h
 #endif
 //======================================================================================================
 
-void ShowVkResult(VkResult err);       // Print warnings and errors.
+void ShowVkResult(VkResult err);  // Print warnings and errors.
 
 //============================================ CDebugReport ============================================
 class CDebugReport {
@@ -161,15 +161,16 @@ class CDebugReport {
     VkDebugReportFlagsEXT               flags;
 
     void Set(VkDebugReportFlagsEXT flags, PFN_vkDebugReportCallbackEXT debugFunc = 0);
-    void Print(); // Print the debug report flags state.
+    void Print();  // Print the debug report flags state.
 
-    friend class CInstance;                                   // CInstance calls Init and Destroy
-    void Init(VkInstance inst);                               // Initialize with default callback, and all flags enabled.
-    void Destroy();                                           // Destroy the debug report. Must be called BEFORE vkDestroyInstance()
+    friend class CInstance;                                    // CInstance calls Init and Destroy
+    void Init(VkInstance inst);                                // Initialize with default callback, and all flags enabled.
+    void Destroy();                                            // Destroy the debug report. Must be called BEFORE vkDestroyInstance()
+
   public:
-    VkDebugReportFlagsEXT GetFlags() { return flags; }        // Returns current flag settings.
-    void SetFlags(VkDebugReportFlagsEXT flags);               // Select which type of messages to display
-    void SetCallback(PFN_vkDebugReportCallbackEXT debugFunc); // Set a custom callback function for printing debug reports
+    VkDebugReportFlagsEXT GetFlags() { return flags; }         // Returns current flag settings.
+    void SetFlags(VkDebugReportFlagsEXT flags);                // Select which type of messages to display
+    void SetCallback(PFN_vkDebugReportCallbackEXT debugFunc);  // Set a custom callback function for printing debug reports
 };
 //=======================================================================================================
 

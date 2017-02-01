@@ -37,31 +37,31 @@
 // Alternative with no concatenation:
 //   #define printf(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG,__VA_ARGS__)
 
-struct printBuf{
-    static const int SIZE=256;
+struct printBuf {
+    static const int SIZE = 256;
     char buf[SIZE];
-    printBuf(){ clear(); }
-    printBuf(const char* c){memset(buf,0,SIZE); strncpy(buf,c,SIZE-1);}
-    printBuf& operator+=(const char* c){strncat(buf,c,SIZE-len()-1); if(len()>=SIZE-1) flush(); return *this;}
-    int len(){return strlen(buf);}
-    void clear(){ memset(buf,0,SIZE); }
-    void flush(){__android_log_print(ANDROID_LOG_INFO ,"WSIWindow","%s",buf); clear();}
+    printBuf() { clear(); }
+    printBuf(const char* c) {memset(buf, 0, SIZE); strncpy(buf, c, SIZE - 1);}
+    printBuf& operator+=(const char* c) {strncat(buf, c, SIZE - len() - 1); if(len() >= SIZE - 1) flush(); return *this;}
+    int len() {return strlen(buf);}
+    void clear(){ memset(buf, 0, SIZE); }
+    void flush() {__android_log_print(ANDROID_LOG_INFO, "WSIWindow", "%s", buf); clear();}
 }printBuf;
 
-int printf(const char* format,...){  //printf for Android
+int printf(const char* format, ...) {  // printf for Android
     char buf[printBuf.SIZE];
     va_list argptr;
     va_start(argptr, format);
-    vsnprintf(buf,sizeof(buf), format, argptr);
+    vsnprintf(buf, sizeof(buf), format, argptr);
     va_end(argptr);
-    printBuf+=buf;
-    int len=strlen(buf);
-    if((len>=printBuf.SIZE-1) || (buf[len-1]=='\n')) printBuf.flush(); //flush on
+    printBuf += buf;
+    int len = strlen(buf);
+    if ((len >= printBuf.SIZE - 1) || (buf[len - 1] == '\n')) printBuf.flush();  // flush on
     return strlen(buf);
 }
 //--------------------------------------------------------------------------------------------------
 
-android_app* Android_App=0;                //Android native-actvity state
+android_app* Android_App = 0;  // Android native-actvity state
 /*
 //--------------------TEMP------------------------
 //--Window event handler--
