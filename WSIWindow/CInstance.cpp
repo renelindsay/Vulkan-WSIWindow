@@ -33,8 +33,10 @@ int CPickList::IndexOf(const char* name) {
     return -1;
 }
 
-void CPickList::Pick(initializer_list<const char*> list) {
-    for (auto item : list) Pick(item);
+bool CPickList::Pick(initializer_list<const char*> list) { // Return true if all items were found.
+      bool found = true;
+      for (auto item : list) found &= Pick(item);
+      return found;
 }
 
 bool CPickList::Pick(const char* name) {
@@ -68,7 +70,7 @@ void CPickList::Print(const char* listName){
   forCount(Count()){
       bool picked = false;
       char* name = Name(i);
-      for(auto& pick : pick_list) if(pick == name) picked = true;
+      for(char* pick : pick_list) picked |= (!strcmp(pick, name));
       if (picked) { print(eRESET, "\t%s %s\n",cTICK, name); }
       else        { print(eFAINT, "\t%s %s\n"," "  , name); }
   }
