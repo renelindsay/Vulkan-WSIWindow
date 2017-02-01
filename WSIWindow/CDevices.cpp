@@ -15,21 +15,18 @@ void CQueueFamilies::Init(VkPhysicalDevice gpu){
 }
 */
 void CQueueFamilies::Print(){
-    printf("\t   Queue Families: %d\n",Count());
-    for(uint i=0; i<Count();++i){
+    printf("\t   Queue Families: %d\n", Count());
+    for(uint i=0; i<Count(); ++i){
         VkQueueFamilyProperties props = family_list[i];
-        const uint32_t     count = props.queueCount;
-        const VkQueueFlags flags = props.queueFlags;
-        printf("\t        %d:\t",i);
-        printf("Queue count = %d\n",count);
-        printf("\t\tFlags (");
-        const char* sep="";
-        if(flags&1){ printf("%s GRAPHICS ",sep); sep="|";}
-        if(flags&2){ printf("%s COMPUTE " ,sep); sep="|";}
-        if(flags&4){ printf("%s TRANSFER ",sep); sep="|";}
-        if(flags&8){ printf("%s SPARSE "  ,sep);         }
-        printf(" ) = %d\n", flags);
-
+        printf("\t       %d:\t",i);
+        printf("Queue count = %d\n", props.queueCount);
+        // --Print queue flags--
+        char buf[50]{};
+        int flags = props.queueFlags << 1;
+        for(auto flag : {"GRAPHICS", "COMPUTE", "TRANSFER", "SPARSE"})
+            if ((flags >>= 1) & 1) sprintf(buf, "%s%s | ", buf, flag);
+        printf("\t\tFlags ( %.*s) = %d\n", (int)strlen(buf) - 2, buf, props.queueFlags);
+        // ---------------------
         VkExtent3D min=props.minImageTransferGranularity;
         printf("\t\tTimestampValidBits = %d\n", props.timestampValidBits);
         printf("\t\tminImageTransferGranularity(w,h,d) = (%d, %d, %d)\n", min.width, min.height, min.depth);
@@ -40,18 +37,10 @@ void CQueueFamilies::Print(){
 //------------------------CPhysicalDevice-------------------------
 
 const char* CPhysicalDevice::VendorName(){
-    //static char vendor_id[8]{};
-    uint32_t vendorID=properties.vendorID;
-    switch(vendorID){
-        case 0x1002 : return "AMD";
-        case 0x10DE : return "NVIDIA";
-        case 0x8086 : return "INTEL";
-        case 0x13B5 : return "ARM";
-        case 0x5143 : return "Qualcomm";
-        case 0x1010 : return "ImgTec";
-        default : return "";
-        //default: sprintf(vendor_id, "0x%X",vendorID); return vendor_id;
-    }
+    struct {const uint id; const char* name;} vendors[] =
+    {{0x1002, "AMD"}, {0x10DE, "NVIDIA"}, {0x8086, "INTEL"}, {0x13B5, "ARM"}, {0x5143, "Qualcomm"}, {0x1010, "ImgTec"}};
+    for(auto vendor : vendors) if(vendor.id == properties.vendorID) return vendor.name;
+    return "";
 }
 
 VkDevice CPhysicalDevice::CreateDevice(){
@@ -116,7 +105,7 @@ CDevices::CDevices(VkInstance instance){
             gpus.resize(count);
             result = vkEnumeratePhysicalDevices(instance, &count, gpus.data());  // Fetch gpu list
         }
-    }while (result==VK_INCOMPLETE);                                              // If list is incomplete, try again.
+    }while (result == VK_INCOMPLETE);                                            // If list is incomplete, try again.
     VKERRCHECK(result);
     if(!count) LOGW("No GPU devices found.");                                    // Vulkan driver missing?
 
@@ -140,7 +129,6 @@ CDevices::CDevices(VkInstance instance){
         device.queue_families.family_list.resize(family_count);
         for(uint i=0; i<family_count; ++i){
             device.queue_families.family_list[i].properties=family_list[i];
-            device.queue_families.family_list[i].properties.queueCount=99;
         }
 
         //----------------------
