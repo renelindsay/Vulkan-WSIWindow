@@ -76,22 +76,35 @@ int main(int argc, char *argv[]){
     setvbuf(stdout, NULL, _IONBF, 0);                         // Prevent printf buffering in QtCreator
     printf("WSI-Window\n");
 
-    CInstance inst(false);                                     // Create a Vulkan Instance
+    CInstance inst(true);                                    // Create a Vulkan Instance
     //inst.DebugReport.SetFlags(14);                            // Select message types
-    inst.DebugReport.SetFlags(0);                            // Select message types
-
-    CDevices devices(inst);
-    devices.Print();
-    CPhysicalDevice device = devices[0];
-    device.extensions.Print();
-    device.queue_families.Print();
-    device.CreateDevice();
-
+    inst.DebugReport.SetFlags(0);                             // Select message types
 
     MyWindow Window;                                          // Create a Vulkan window
     Window.SetTitle("WSI-Window Sample1");                    // Set the window title
     Window.SetWinSize(640, 480);                              // Set the window size (Desktop)
-  //VkSurfaceKHR surface = Window.GetSurface(inst);           // Create the Vulkan surface
+
+    CSurface surface = Window.GetSurface(inst);               // Create the Vulkan surface
+    CDevices devices(surface);
+    devices.Print(true);
+    CPhysicalDevice& device = devices[0];
+    device.extensions.Print();
+
+    //int present_q_inx=device.queue_families.FindPresentable();
+    //device.queue_families[present_q_inx].Pick(1);
+
+    //int graphics_q_inx=device.queue_families.Find(VK_QUEUE_GRAPHICS_BIT);
+    //device.queue_families[graphics_q_inx].Pick(4);
+
+    //device.queue_families.Pick(1,4,0,0);
+
+    CDevice dev=device.Create();
+
+
+
+    bool presentable=Window.CanPresent(devices[1], 0);
+    printf("Presentable=%s\n", presentable ? "True" : "False");
+
 
     Window.ShowKeyboard(true);                                // Show soft-keyboard (Android)
     LOGW("Test Warnings\n");
@@ -101,5 +114,7 @@ int main(int argc, char *argv[]){
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);
         if (key_pressed) printf("LEFT SHIFT PRESSED\r");
     }
+
+    //printf(""device.VendorName());
     return 0;
 }

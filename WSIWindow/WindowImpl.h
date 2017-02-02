@@ -105,6 +105,7 @@ class CMTouch{
 //===========================CSurface===========================
 class CSurface {                                                               // Vulkan Surface
   protected:
+    friend class CDevices;
     VkInstance  instance = 0;
     VkSurfaceKHR surface = 0;
 

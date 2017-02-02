@@ -368,7 +368,14 @@ EventType Window_xcb::GetEvent(bool wait_for_event) {
 
 // Return true if this window can present the given queue type
 bool Window_xcb::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) {
-    return vkGetPhysicalDeviceXcbPresentationSupportKHR(gpu, queue_family, xcb_connection, xcb_screen->root_visual) == VK_TRUE;
+    // return vkGetPhysicalDeviceXcbPresentationSupportKHR(gpu, queue_family, xcb_connection, xcb_screen->root_visual) == VK_TRUE;
+
+    uint gpu_count = 0;
+    vkEnumeratePhysicalDevices(instance, &gpu_count, NULL);  // If more than 1 gpu is found,
+    if(gpu_count > 1) stderr = freopen(NULL, "r", stderr);  //  mute "Buggy applications may crash" warnings from Mesa
+    VkBool32 can_present = vkGetPhysicalDeviceXcbPresentationSupportKHR(gpu, queue_family, xcb_connection, xcb_screen->root_visual);
+    stderr = freopen(NULL, "a+", stderr);  // Re-enable stderr
+    return can_present == VK_TRUE;
 }
 
 #endif  // VK_USE_PLATFORM_XCB_KHR
