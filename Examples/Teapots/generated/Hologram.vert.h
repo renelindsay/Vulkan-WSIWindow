@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #if 0
-/home/rene/git/Vulkan-WSIWindow/Samples/Teapots/Hologram.vert
+/home/rene/git/Vulkan-WSIWindow/Examples/Teapots/Hologram.vert
 Warning, version 310 is not yet complete; most version-specific features are present, but some are missing.
 
 // Module Version 10000

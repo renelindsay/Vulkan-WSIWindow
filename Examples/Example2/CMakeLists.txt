@@ -1,4 +1,4 @@
-project(Sample1)
+project(Example2)
 cmake_minimum_required(VERSION 2.8)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

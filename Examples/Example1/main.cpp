@@ -81,14 +81,14 @@ int main(int argc, char *argv[]){
     inst.DebugReport.SetFlags(0);                             // Select message types
 
     MyWindow Window;                                          // Create a Vulkan window
-    Window.SetTitle("WSI-Window Sample1");                    // Set the window title
+    Window.SetTitle("WSI-Window Example1");                   // Set the window title
     Window.SetWinSize(640, 480);                              // Set the window size (Desktop)
 
     CSurface surface = Window.GetSurface(inst);               // Create the Vulkan surface
-    CDevices devices(surface);
-    devices.Print(true);
-    CPhysicalDevice& device = devices[0];
-    device.extensions.Print();
+    CDevices gpus(surface);
+    gpus.Print(true);
+    CPhysicalDevice& gpu = gpus[0];
+    gpu.extensions.Print();
 
     //int present_q_inx=device.queue_families.FindPresentable();
     //device.queue_families[present_q_inx].Pick(1);
@@ -98,12 +98,12 @@ int main(int argc, char *argv[]){
 
     //device.queue_families.Pick(1,4,0,0);
 
-    CDevice dev=device.Create();
+    CDevice device = gpu.CreateDevice();
 
 
 
-    bool presentable=Window.CanPresent(devices[1], 0);
-    printf("Presentable=%s\n", presentable ? "True" : "False");
+    //bool presentable=Window.CanPresent(gpus[1], 0);
+    //printf("Presentable=%s\n", presentable ? "True" : "False");
 
 
     Window.ShowKeyboard(true);                                // Show soft-keyboard (Android)

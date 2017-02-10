@@ -1,5 +1,14 @@
 /*
 *  This unit wraps Physical devices, Logical devices and Queues.
+*  Use CPhysicalDevice.CreateDevice(), to create a logical device, with queues.
+*
+*  CDevices[]
+*   └CPhysicalDevice -------------------> CreateDevice(): CDevice
+*     ├VkPhysicalDeviceProperties                          └CQueue[]
+*     ├VkPhysicalDeviceFeatures
+*     ├CDeviceExtensions[]        (Picklist)
+*     └CQueueFamilies[]
+*       └CQueueFamily
 *
 *  WARNING: This unit is a work in progress.
 *  Interfaces are highly experimental and very likely to change.
@@ -11,7 +20,6 @@
 #include "CInstance.h"
 #include "WindowImpl.h"
 
-
 //-------------------------CQueueFamily---------------------------
 class CQueueFamily{
     friend class CDevices;
@@ -19,6 +27,7 @@ class CQueueFamily{
     VkQueueFamilyProperties properties;
     bool                    presentable = false;
     uint                    pick_count = 0;
+
   public:
     bool IsPresentable(){ return presentable; }
     operator VkQueueFamilyProperties() const { return properties; }
@@ -31,15 +40,16 @@ class CQueueFamilies{
     friend class CDevices;
     friend class CPhysicalDevice;
     vector<CQueueFamily> family_list;
-public:
+
+  public:
     uint32_t Count(){return (uint32_t) family_list.size();}
     CQueueFamily& operator [](const int i) { return family_list[i]; }
     void Print();
 
     int Find(VkQueueFlags flags);
     int FindPresentable();
-    bool Pick(uint presentable=1, uint graphics=1, uint compute=0, uint transfer=0);
-};
+    bool Pick(uint presentable=1, uint graphics=0, uint compute=0, uint transfer=0);  // Returns false if number of created queues
+};                                                                                    // is less than requested.
 //----------------------------------------------------------------
 //-----------------------------CQueue-----------------------------
 struct CQueue{
@@ -47,34 +57,25 @@ struct CQueue{
     uint         family;
     uint         index;
     VkQueueFlags flags;
-    bool presentable;
+    bool         presentable;
     operator VkQueue () const { return handle; }
 };
 //----------------------------------------------------------------
 //----------------------------CDevice-----------------------------
+struct CDevice{  // Logical device
+    VkPhysicalDevice gpu_handle = 0;
+    VkDevice         handle = 0;
+    vector<CQueue>   queues;
 
-struct CDevice{  //Logical device
-    VkDevice handle = 0;
-    operator VkDevice () const { return handle; }
+    //VkSurfaceCapabilitiesKHR   surface_caps;
 
-    //CQueue present_queue;
-    //vector<VkQueue> graphics_queues;
-    //vector<VkQueue> compute_queues;
-    //vector<VkQueue> transfer_queues;
-
-    vector<CQueue> queues;
-
-    ~CDevice(){
-        LOGI("Logical device destroyed\n");
-        vkDeviceWaitIdle(handle);
-        vkDestroyDevice(handle, nullptr);
-    }
-
+    operator VkPhysicalDevice () const { return gpu_handle; }
+    operator VkDevice         () const { return handle; }
+    ~CDevice();
     void Print();
 };
 //----------------------------------------------------------------
 //------------------------CPhysicalDevice-------------------------
-
 struct CPhysicalDevice{
     CPhysicalDevice();
     const char* VendorName() const;
@@ -85,20 +86,26 @@ struct CPhysicalDevice{
     CDeviceExtensions          extensions;     // picklist
     bool                       presentable;    // has presentable queues
 
-    operator VkPhysicalDevice () const { return handle; }
-    //VkDevice Create();  // Create logical device
-    CDevice Create();  // Create logical device
+    //VkSurfaceCapabilitiesKHR   surface_caps;
 
-    //CDevice Create(uint presentable=1, uint graphics=1, uint Compute=0, uint transfer=0);  // Create logical device
+    operator VkPhysicalDevice () const { return handle; }
+    //CDevice CreateDevice();  // Create logical device and queues
+    CDevice CreateDevice(uint present=1, uint graphics=0, uint compute=0, uint transfer=0);  // Create logical device + queues
 };
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 class CDevices{
-    vector<CPhysicalDevice> device_list;
+    vector<CPhysicalDevice> gpu_list;
 public:
     CDevices(const CSurface& surface);
-    uint32_t Count(){return (uint32_t)device_list.size();}
-    CPhysicalDevice& operator [](const int i) { return device_list[i]; }
+    uint32_t Count(){return (uint32_t)gpu_list.size();}
+    CPhysicalDevice* FindPresentable();  // Returns first device which is able to present to the given surface, or null if none.
+
+    //CPhysicalDevice* begin(){return &gpu_list[0]; }
+    //CPhysicalDevice* end(){return &gpu_list[gpu_list.size()-1];}
+
+    //operator vector<CPhysicalDevice>& () { return gpu_list; }
+    CPhysicalDevice& operator [](const int i) { return gpu_list[i]; }
     void Print(bool show_queues = false);
 };
 //----------------------------------------------------------------
