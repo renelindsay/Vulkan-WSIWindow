@@ -33,6 +33,7 @@ const char* type[]{"up  ", "down", "move"};
 
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow{
+/*
     //--Mouse event handler--
     void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn){
         printf("Mouse: %s %d x %d Btn:%d\n", type[action], x, y, btn);
@@ -67,7 +68,7 @@ class MyWindow : public WSIWindow{
     void OnTouchEvent(eAction action, float x, float y, uint8_t id){
         printf("Touch: %s %4.0f x %4.0f Finger id:%d\n",type[action], x, y, id);
     }
-
+*/
     void OnCloseEvent(){
         printf("Window Closing.\n");
     }
@@ -83,32 +84,28 @@ int main(int argc, char *argv[]){
     MyWindow Window;                                          // Create a Vulkan window
     Window.SetTitle("WSI-Window Example2");                   // Set the window title
     Window.SetWinSize(640, 480);                              // Set the window size (Desktop)
+    Window.SetWinPos(0, 0);                                   // Set the window position to top-left
 
     CSurface surface = Window.GetSurface(inst);               // Create the Vulkan surface
-    CDevices gpus(surface);
+    CDevices gpus(surface);                                   // Enumerate GPUs, and their properties
     gpus.Print(true);
 
     //bool presentable=Window.CanPresent(gpus[1], 0);
     //printf("Presentable=%s\n", presentable ? "True" : "False");
 
-
-    //CPhysicalDevice& gpu = gpus[0];
     CPhysicalDevice* gpu = gpus.FindPresentable();           // Find first GPU, capable of presenting to the given surface.
     if(!gpu){
         LOGE("No presentable devices found.");
         return 0;
     }
 
+
+
     gpu->extensions.Print();
 
     CDevice device = gpu->CreateDevice(1, 0, 0, 0);           // create logical device with 1 present-queue
     CSwapchain swapchain(&device, surface, 3);                // create swapchain with tripple-buffering
     swapchain.Print();
-
-
-    Window.ShowKeyboard(true);                                // Show soft-keyboard (Android)
-    LOGW("Test Warnings\n");
-    Window.SetWinPos(0, 0);
 
     while(Window.ProcessEvents()){                            // Main event loop, runs until window is closed.
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);

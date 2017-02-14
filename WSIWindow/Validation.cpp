@@ -52,6 +52,11 @@ void color(eColor color) {  // Sets Terminal text color (Win32/Linux)
     if (color) printf("\033[3%dm", color & 7);                  // set text color
 #endif
 }
+
+//void tick(bool yes){
+//    color(yes ? eRESET : eFAINT);
+//    printf("%s", yes ? cTICK : " ");
+//}
 //-------------------------------------------------------------
 
 //-----------------------Error Checking------------------------

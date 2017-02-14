@@ -32,7 +32,7 @@ void CQueueFamilies::Print(){
 }
 
 int CQueueFamilies::Find(VkQueueFlags flags){
-    forCount(Count()){
+    repeat(Count()){
         const VkQueueFamilyProperties& family = family_list[i];
         if((family.queueFlags & flags) == flags) return i;
     }
@@ -40,16 +40,16 @@ int CQueueFamilies::Find(VkQueueFlags flags){
 }
 
 int CQueueFamilies::FindPresentable(){
-    forCount(Count()){
+    repeat(Count()){
         if(family_list[i].IsPresentable()) return i;
     }
     return -1;
 }
 
 bool CQueueFamilies::Pick(uint presentable, uint graphics, uint compute, uint transfer){
-    forCount(Count()){
+    repeat(Count()){
         CQueueFamily& family = family_list[i];
-        if (family.IsPresentable()) presentable -= family.Pick(presentable);
+        if (family.IsPresentable()) presentable -= family.Pick(presentable);  // TODO: Ensure present-queue also has graphics-bit.
         if (family.Has(VK_QUEUE_GRAPHICS_BIT)) graphics -= family.Pick(graphics);
         if (family.Has(VK_QUEUE_COMPUTE_BIT )) compute  -= family.Pick(compute );
         if (family.Has(VK_QUEUE_TRANSFER_BIT)) transfer -= family.Pick(transfer);
@@ -82,39 +82,40 @@ const char* CPhysicalDevice::VendorName() const {
 CDevice CPhysicalDevice::CreateDevice(uint present, uint graphics, uint compute, uint transfer){
     // queue_families.Pick(1,0,0,0);  // Pick one presentable queue only.
     queue_families.Pick(present, graphics, compute, transfer);  // Pick queue types to create.
-
-    uint info_count = queue_families.Count();
-    std::vector<VkDeviceQueueCreateInfo> info_list(info_count);
-    forCount(info_count){
+    std::vector<float> priorities(present + graphics + compute + transfer, 0.0f);
+    std::vector<VkDeviceQueueCreateInfo> info_list;
+    repeat(queue_families.Count()){
         uint queue_count = queue_families[i].pick_count;
-        std::vector<float> priorities(queue_count, 0.0f);
-        VkDeviceQueueCreateInfo& info = info_list[i];
-        info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        info.queueFamilyIndex = i;
-        info.queueCount       = queue_count;
-        info.pQueuePriorities = priorities.data();
-        //LOGI("\t%d x queue_family_%d\n", queue_count, i);
+        if(queue_count>0){
+            VkDeviceQueueCreateInfo info = {};
+            info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            info.queueFamilyIndex = i;
+            info.queueCount       = queue_count;
+            info.pQueuePriorities = priorities.data();
+            info_list.push_back(info);
+            //LOGI("\t%d x queue_family_%d\n", queue_count, i);
+        }
     }
 
-    VkPhysicalDeviceFeatures features = {};  // TODO: Finish this. (For now, disable all optional features. )
+    VkPhysicalDeviceFeatures enabled_features = {};  // TODO: Finish this. (For now, disable all optional features. )
     VkDeviceCreateInfo device_create_info = {};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_create_info.queueCreateInfoCount    = info_count;
+    device_create_info.queueCreateInfoCount    = info_list.size();
     device_create_info.pQueueCreateInfos       = info_list.data();
     device_create_info.enabledExtensionCount   = extensions.PickCount();
     device_create_info.ppEnabledExtensionNames = extensions.PickList();
-    device_create_info.pEnabledFeatures        = &features;
+    device_create_info.pEnabledFeatures        = &enabled_features;
 
     CDevice device;
     VKERRCHECK(vkCreateDevice(handle, &device_create_info, nullptr, &device.handle));
     device.gpu_handle = handle;
 
     //--Create device queues--
-    forCount(queue_families.Count()){
+    repeat(queue_families.Count()){
         uint family_inx = i;
         CQueueFamily& family = queue_families[i];
         uint pick_count = queue_families[i].pick_count;
-        forCount(pick_count){
+        repeat(pick_count){
             CQueue q;
             uint queue_inx = i;
             q.flags       = family.properties.queueFlags;
@@ -134,11 +135,11 @@ CDevice CPhysicalDevice::CreateDevice(uint present, uint graphics, uint compute,
 void CDevice::Print(){  // List created queues
     printf("Logical Device queues:\n");
     uint qcount = queues.size();
-    forCount(qcount){
+    repeat(qcount){
        CQueue& q=queues[i];
        printf("\t%d: family=%d index=%d presentable=%s flags=", i, q.family,q.index, q.presentable ? "True" : "False");
        const char* fnames[]{"GRAPHICS", "COMPUTE", "TRANSFER", "SPARSE"};
-       forCount(4) if ((q.flags & 1<<i)) printf("%s ", fnames[i]);
+       repeat(4) if ((q.flags & 1<<i)) printf("%s ", fnames[i]);
        printf("\n");
     }
 }
@@ -167,10 +168,8 @@ CDevices::CDevices(const CSurface& surface){
         vkGetPhysicalDeviceProperties(gpu, &gpu.properties);
         vkGetPhysicalDeviceFeatures  (gpu, &gpu.features);
         //--Surface caps--
-        VkSurfaceCapabilitiesKHR surface_caps;
-        VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
-        if ((gpu_count == 1) && (gpu.properties.vendorID == 0x8086) && (surface_caps.maxImageCount == 0))
-            LOGE("Vulkan is unable to present to this surface. (Maybe DRI3 was not enabled?)\n");
+//        VkSurfaceCapabilitiesKHR surface_caps;
+//        VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
         //----------------
         gpu.extensions.Init(gpu);
         gpu.extensions.Pick(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -185,8 +184,7 @@ CDevices::CDevices(const CSurface& surface){
         for(uint i=0; i<family_count; ++i){
             CQueueFamily& family = gpu.queue_families.family_list[i];
             family.properties = family_list[i];
-            if (surface_caps.maxImageCount>0)  // 0 if No DRI3 support (Mute "Buggy applications may crash" warnings from Mesa.)
-                family.presentable = surface.CanPresent(gpu.handle, i);
+            family.presentable = surface.CanPresent(gpu.handle, i);
             if (family.presentable) gpu.presentable = true;
         }
         //----------------------

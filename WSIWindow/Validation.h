@@ -86,6 +86,7 @@ enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,    
 void color(eColor color);
 // void print(eColor col,const char* format,...);
 #define print(COLOR,...) { color(COLOR); printf(__VA_ARGS__);  color(eRESET); }
+//void tick(bool yes);
 
 // clang-format off
 #ifdef ANDROID

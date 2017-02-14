@@ -32,7 +32,7 @@ class CQueueFamily{
     bool IsPresentable(){ return presentable; }
     operator VkQueueFamilyProperties() const { return properties; }
     uint Pick(uint count);
-    bool Has(VkQueueFlags flags){ return ((properties.queueFlags&flags) == flags); }
+    bool Has(VkQueueFlags flags){ return ((properties.queueFlags & flags) == flags); }
 };
 //----------------------------------------------------------------
 //-------------------------CQueueFamilies-------------------------
@@ -47,7 +47,7 @@ class CQueueFamilies{
     void Print();
 
     int Find(VkQueueFlags flags);
-    int FindPresentable();
+    int FindPresentable();                                                            // TODO: Find a more flexible pick-strategy.
     bool Pick(uint presentable=1, uint graphics=0, uint compute=0, uint transfer=0);  // Returns false if number of created queues
 };                                                                                    // is less than requested.
 //----------------------------------------------------------------
@@ -81,11 +81,12 @@ struct CPhysicalDevice{
     const char* VendorName() const;
     VkPhysicalDevice           handle;
     VkPhysicalDeviceProperties properties;
-    VkPhysicalDeviceFeatures   features;
+    VkPhysicalDeviceFeatures   features;       // list of available features
     CQueueFamilies             queue_families; // array
     CDeviceExtensions          extensions;     // picklist
     bool                       presentable;    // has presentable queues
 
+    //VkPhysicalDeviceFeatures enabled_features = {};  // Set required features.   TODO: finish this.
     //VkSurfaceCapabilitiesKHR   surface_caps;
 
     operator VkPhysicalDevice () const { return handle; }
