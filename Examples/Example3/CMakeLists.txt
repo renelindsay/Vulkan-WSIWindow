@@ -1,4 +1,4 @@
-project(Example1)
+project(Example3)
 cmake_minimum_required(VERSION 2.8)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -17,4 +17,5 @@ endif()
 target_link_libraries(${PROJECT_NAME} WSIWindow)
 #-------------------------------------------
 
-
+#  Copy all files from ./Assets to the binary directory.
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/assets/" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

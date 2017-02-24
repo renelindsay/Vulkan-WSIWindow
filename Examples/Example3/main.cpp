@@ -27,11 +27,13 @@
 
 #include "WSIWindow.h"
 #include "CDevices.h"
+#include "CSwapchain.h"
 
 const char* type[]{"up  ", "down", "move"};
 
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow{
+/*
     //--Mouse event handler--
     void OnMouseEvent(eAction action, int16_t x, int16_t y, uint8_t btn){
         printf("Mouse: %s %d x %d Btn:%d\n", type[action], x, y, btn);
@@ -66,7 +68,7 @@ class MyWindow : public WSIWindow{
     void OnTouchEvent(eAction action, float x, float y, uint8_t id){
         printf("Touch: %s %4.0f x %4.0f Finger id:%d\n",type[action], x, y, id);
     }
-
+*/
     void OnCloseEvent(){
         printf("Window Closing.\n");
     }
@@ -76,45 +78,39 @@ int main(int argc, char *argv[]){
     setvbuf(stdout, NULL, _IONBF, 0);                         // Prevent printf buffering in QtCreator
     printf("WSI-Window\n");
 
-    CInstance inst(true);                                    // Create a Vulkan Instance
+    CInstance inst(false);                                    // Create a Vulkan Instance
     //inst.DebugReport.SetFlags(14);                            // Select message types
-    inst.DebugReport.SetFlags(0);                             // Select message types
 
     MyWindow Window;                                          // Create a Vulkan window
-    Window.SetTitle("WSI-Window Example1");                   // Set the window title
+    Window.SetTitle("WSI-Window Example3");                   // Set the window title
     Window.SetWinSize(640, 480);                              // Set the window size (Desktop)
+    Window.SetWinPos(0, 0);                                   // Set the window position to top-left
 
     CSurface surface = Window.GetSurface(inst);               // Create the Vulkan surface
-    CPhysicalDevices gpus(surface);
+    CPhysicalDevices gpus(surface);                           // Enumerate GPUs, and their properties
     gpus.Print(true);
-    CPhysicalDevice& gpu = gpus[0];
-    gpu.extensions.Print();
-
-    //int present_q_inx=device.queue_families.FindPresentable();
-    //device.queue_families[present_q_inx].Pick(1);
-
-    //int graphics_q_inx=device.queue_families.Find(VK_QUEUE_GRAPHICS_BIT);
-    //device.queue_families[graphics_q_inx].Pick(4);
-
-    //device.queue_families.Pick(1,4,0,0);
-
-    CDevice device = gpu.CreateDevice();
-
-
 
     //bool presentable=Window.CanPresent(gpus[1], 0);
     //printf("Presentable=%s\n", presentable ? "True" : "False");
 
+    CPhysicalDevice* gpu = gpus.FindPresentable();           // Find first GPU, capable of presenting to the given surface.
+    if(!gpu){
+        LOGE("No presentable devices found.");
+        return 0;
+    }
 
-    Window.ShowKeyboard(true);                                // Show soft-keyboard (Android)
-    LOGW("Test Warnings\n");
-    Window.SetWinPos(0, 0);
+
+
+    gpu->extensions.Print();
+
+    CDevice device = gpu->CreateDevice(1, 0, 0, 0);           // create logical device with 1 present-queue
+    CSwapchain swapchain(&device, surface, 3);                // create swapchain with tripple-buffering
+    swapchain.Print();
 
     while(Window.ProcessEvents()){                            // Main event loop, runs until window is closed.
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);
         if (key_pressed) printf("LEFT SHIFT PRESSED\r");
     }
 
-    //printf(""device.VendorName());
     return 0;
 }

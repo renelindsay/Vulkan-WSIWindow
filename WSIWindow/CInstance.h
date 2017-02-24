@@ -99,7 +99,7 @@ struct CDeviceExtensions : public CPickList {
     void Init(VkPhysicalDevice phy, const char* layerName = NULL);
     char* Name(uint32_t inx) { return item_list[inx].extensionName; }
     uint32_t Count() { return (uint32_t)item_list.size(); }
-    void     Print() { CPickList::Print("Device-Extensions"); }
+    void     Print() { CPickList::Print("Device-Extensions "); }
 };
 //----------------------------------------------------------------
 //---------------------------CInstance----------------------------

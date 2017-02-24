@@ -11,7 +11,7 @@ add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 #---------------Find WSIWindow---------------
 if(NOT TARGET WSIWindow)
-    add_subdirectory(../../WSIWindow ${CMAKE_BINARY_DIR}/WSIWindow)
+    add_subdirectory(../WSIWindow ${CMAKE_BINARY_DIR}/WSIWindow)
 endif()
 
 target_link_libraries(${PROJECT_NAME} WSIWindow)
