@@ -1,4 +1,4 @@
-![LunarG Logo](./WSIWindow/docs/WSI_planetfall.jpg "LunarG")
+![Renegade Logo](./WSIWindow/docs/renegade-vulkan-wsiwindow.png "Renegade")
 
 
 # WSI-Window
@@ -8,7 +8,7 @@
 
 ## Supported platforms
 
-![LunarG Logo](./WSIWindow/docs/platforms.png "Platforms")
+![Renegade Logo](./WSIWindow/docs/platforms.png "Platforms")
   
 
 | Platform         | Build Status |
@@ -45,7 +45,7 @@ Please see the [BUILD.md](BUILD.md) document for details on how to build WSI-Win
 
 WSI-Window has a very modular design. It consists of a few loosely coupled classes, which abstracts away much of the tedious, platform-specific boiler-plate code, when creating a Vulkan application.  For example, WSI-Window requires a valid VkInstance as input, when creating a VkSurfaceKHR, which you can get from the optional CInstance class.  Alternatively, you may create the VkInstance yourself, by calling Vulkan directly. However, if you do, it is up to you to set up Validation, and ensure the correct layers and extensions are loaded for your target platform.
 
-![LunarG Logo](./WSIWindow/docs/WSIWindow.png "WSI-Window")
+![WSI-Window diagram](./WSIWindow/docs/WSIWindow.png "WSI-Window")
 
 ## Classes
 
@@ -185,7 +185,7 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
 
         int main(){
             CInstance Inst;                                // Create a Vulkan Instance
-            WSIWindow Window("LunarG", 640, 480);          // Create a window, setting title and size.
+            WSIWindow Window("Vulkan", 640, 480);          // Create a window, setting title and size.
             VkSurfaceKHR surface=Window.GetSurface(Inst);  // Get the Vulkan surface
             while(Window.ProcessEvents()){ }               // Run message-loop until window is closed
             return 0;
@@ -196,7 +196,7 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
 
         int main(){
             CInstance Inst;                                           // Create a Vulkan Instance
-            WSIWindow Window("LunarG",640, 480);                      // Create a Vulkan window
+            WSIWindow Window("Vulkan",640, 480);                      // Create a Vulkan window
             VkSurfaceKHR surface=Window.GetSurface(Inst);             // Get the Vulkan surface
             while(Window.ProcessEvents()){                            // Run message-loop
                 bool KeyPressed = Window.GetKeyState(KEY_LeftShift);  // Get state of a key. (see keycodes.h)
@@ -212,7 +212,7 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
 
         #include "WSIWindow.h"
 
-        const char* type[] = {"up  ", "down", "move"};
+        const char* type[]{"up  ", "down", "move"};
 
         class MyWindow : public WSIWindow{
             //--Mouse event handler--
@@ -234,14 +234,14 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
             void OnResizeEvent(uint16_t width, uint16_t height){
                 printf("Window Resize: width=%4d height=%4d\n", width, height);
             }
-        };
+        };&deg;&deg;&deg;
 
         int main(){
-            CInstance Inst;                                // Create a Vulkan Instance
-            MyWindow Window;                               // Create a window
-            Window.SetTitle("LunarG");                     // Set window title
-            Window.SetWinSize(640, 480);                   // Set window size
-            VkSurfaceKHR surface=Window.GetSurface(Inst);  // Get the Vulkan surface
-            while(Window.ProcessEvents()){ }               // Run until window is closed
+            CInstance Inst;                                  // Create a Vulkan Instance
+            MyWindow Window;                                 // Create a window
+            Window.SetTitle("Vulkan");                       // Set window title
+            Window.SetWinSize(640, 480);                     // Set window size
+            VkSurfaceKHR surface = Window.GetSurface(Inst);  // Get the Vulkan surface
+            while(Window.ProcessEvents()){ }                 // Run until window is closed
             return 0;
         }

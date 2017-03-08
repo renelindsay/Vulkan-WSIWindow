@@ -22,7 +22,7 @@ Alternatively, CMake provides a GUI, to generate project files for other IDE's, 
  - `VULKAN_INCLUDE . .:` Set this to the path of the vulkan.h file.
 
 ### Windows
-Install the Vulkan SDK, CMake and Visual Studio.  
+Install the Vulkan SDK, Python3, CMake and Visual Studio.  
 Use cmake-gui to load the CMakeLists.txt file.  
 Configure CMake settings if needed, and generate the Visual Studio project.  
 Use Visual Studio to open the generated solution.  
@@ -31,6 +31,7 @@ Set Sample1 as the Startup project.
 Compile and run the sample project.
 
 ### Linux
+Install the Vulkan SDK, Python3, CMake and Qt-Creator.  
 A Few headers are required, to compile WSI-Window: XCB for Windowing, XKB for Keyboard input, and XInput2 for Multi-touch(optional).
 
     sudo apt-get install libx11-xcb-dev libxkbcommon-dev libxi-dev
