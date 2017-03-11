@@ -38,7 +38,7 @@
 
 CCube cube;
 
-const char *type[] = {"up  ", "down", "move"};  // Action types for mouse, keyboard and touch-screen.
+const char *type[] {"up  ", "down", "move"};  // Action types for mouse, keyboard and touch-screen.
 
 //-- EVENT HANDLERS --
 class MyWindow : public WSIWindow {

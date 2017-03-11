@@ -2,16 +2,26 @@
 *  This unit wraps Physical devices, Logical devices and Queues.
 *  Use CPhysicalDevice.CreateDevice(), to create a logical device, with queues.
 *
-*  CDevices[]
-*   └CPhysicalDevice -------------------> CreateDevice(): CDevice
+*  └CPhysicalDevices[]
+*   └CPhysicalDevice ----------------------------------> : CDevice
 *     ├VkPhysicalDeviceProperties                          └CQueue[]
 *     ├VkPhysicalDeviceFeatures
 *     ├CDeviceExtensions[]        (Picklist)
-*     └CQueueFamilies[]
-*       └CQueueFamily
+*     └CQueueFamily[]             (array)
 *
 *  WARNING: This unit is a work in progress.
 *  Interfaces are highly experimental and very likely to change.
+*
+* CPhysicalDevices:
+* -----------------
+* Create an instance of CPhysicalDevices, to enumerate the available GPUs, and their properties.
+* Use the FindPresentable() function to find which CPU can present to a given window surface.
+*
+* CDevice:
+* --------
+* Create an instance of CDevice, using the picked CPhysicalDevice as input.
+* Then call the AddQueue() function, to add queues to the logical device.
+*
 */
 
 #ifndef CDEVICES_H
@@ -20,36 +30,42 @@
 #include "CInstance.h"
 #include "WindowImpl.h"
 
-//-------------------------CQueueFamily---------------------------
-class CQueueFamily {
-    friend class CPhysicalDevices;
-    friend class CPhysicalDevice;
-    VkQueueFamilyProperties properties;
-    bool                    presentable = false;
-    uint                    pick_count = 0;
+//------------------------CPhysicalDevice-------------------------
+class CPhysicalDevice {
+    struct CQueueFamily {
+        bool presentable = false;
+        VkQueueFamilyProperties properties;
+        void Print(uint index);
+    };
 
-   public:
-    bool IsPresentable() { return presentable; }
-    operator VkQueueFamilyProperties() const { return properties; }
-    uint Pick(uint count);
-    bool Has(VkQueueFlags flags) { return ((properties.queueFlags & flags) == flags); }
+  public:
+    CPhysicalDevice();
+    const char* VendorName() const;
+    VkPhysicalDevice           handle;          // (RO)
+    VkPhysicalDeviceProperties properties;      // properties and limits (RO)
+    VkPhysicalDeviceFeatures   features;        // list of available features (RO)
+    bool                       presentable;     // has presentable queues (RO)
+    vector<CQueueFamily>       queue_families;  // array of queue families (RO)
+
+    CDeviceExtensions        extensions;             // picklist
+    VkPhysicalDeviceFeatures enabled_features = {};  // Set required features.   TODO: finish this.
+    // VkSurfaceCapabilitiesKHR   surface_caps;
+
+    operator VkPhysicalDevice() const { return handle; }
+    int FindQueueFamily(VkQueueFlags flags, bool presentable = false);  // Returns a QueueFamlyIndex, or -1 if none found.
 };
 //----------------------------------------------------------------
-//-------------------------CQueueFamilies-------------------------
-class CQueueFamilies {
-    friend class CPhysicalDevices;
-    friend class CPhysicalDevice;
-    vector<CQueueFamily> family_list;
+//------------------------CPhysicalDevices------------------------
+class CPhysicalDevices {
+    vector<CPhysicalDevice> gpu_list;
 
    public:
-    uint32_t Count() { return (uint32_t)family_list.size(); }
-    CQueueFamily& operator[](const int i) { return family_list[i]; }
-    void Print();
-
-    int Find(VkQueueFlags flags);
-    int FindPresentable();                                                            // TODO: Find a more flexible pick-strategy.
-    bool Pick(uint presentable=1, uint graphics=0, uint compute=0, uint transfer=0);  // Returns false if number of created queues
-};                                                                                    // is less than requested.
+    CPhysicalDevices(const CSurface& surface);
+    uint32_t Count() { return (uint32_t)gpu_list.size(); }
+    CPhysicalDevice* FindPresentable();  // Returns first device which is able to present to the given surface, or null if none.
+    CPhysicalDevice& operator[](const int i) { return gpu_list[i]; }
+    void Print(bool show_queues = false);
+};
 //----------------------------------------------------------------
 //-----------------------------CQueue-----------------------------
 struct CQueue{
@@ -61,56 +77,21 @@ struct CQueue{
     operator VkQueue() const { return handle; }
 };
 //----------------------------------------------------------------
-//----------------------------CDevice-----------------------------
-struct CDevice {  // Logical device
-    VkPhysicalDevice gpu_handle = 0;
-    VkDevice         handle = 0;
-    vector<CQueue>   queues;
-
-    // VkSurfaceCapabilitiesKHR   surface_caps;
-
-    operator VkPhysicalDevice() const { return gpu_handle; }
-    operator VkDevice        () const { return handle; }
-    ~CDevice();
-    void Print();
-};
-//----------------------------------------------------------------
-//------------------------CPhysicalDevice-------------------------
-class CPhysicalDevice {
-   public:
-    CPhysicalDevice();
-    const char* VendorName() const;
-    VkPhysicalDevice           handle;
-    VkPhysicalDeviceProperties properties;
-    VkPhysicalDeviceFeatures   features;       // list of available features
-    CQueueFamilies             queue_families; // array
-    CDeviceExtensions          extensions;     // picklist
-    bool                       presentable;    // has presentable queues
-
-    // VkPhysicalDeviceFeatures enabled_features = {};  // Set required features.   TODO: finish this.
-    // VkSurfaceCapabilitiesKHR   surface_caps;
-
-    operator VkPhysicalDevice() const { return handle; }
-    //CDevice CreateDevice();  // Create logical device and queues
-    CDevice CreateDevice(uint present=1, uint graphics=0, uint compute=0, uint transfer=0);  // Create logical device + queues
-};
-//----------------------------------------------------------------
-//----------------------------------------------------------------
-class CPhysicalDevices {
-    vector<CPhysicalDevice> gpu_list;
+//-----------------------------CDevice----------------------------
+class CDevice {
+    VkDevice        handle;
+    CPhysicalDevice gpu;
+    vector<CQueue>  queues;
+    uint FamilyQueueCount(uint family);
+    void Create();
+    void Destroy();
 
    public:
-    CPhysicalDevices(const CSurface& surface);
-    uint32_t Count() { return (uint32_t)gpu_list.size(); }
-    CPhysicalDevice* FindPresentable();  // Returns first device which is able to present to the given surface, or null if none.
-
-    // CPhysicalDevice* begin(){return &gpu_list[0]; }
-    // CPhysicalDevice* end(){return &gpu_list[gpu_list.size()-1];}
-
-    // operator vector<CPhysicalDevice>& () { return gpu_list; }
-    CPhysicalDevice& operator[](const int i) { return gpu_list[i]; }
-    void Print(bool show_queues = false);
+    CDevice(CPhysicalDevice gpu) : handle() { this->gpu = gpu; }
+    ~CDevice() { Destroy(); }
+    CQueue* AddQueue(VkQueueFlags flags, bool presentable = false);  // returns 0 if failed
 };
 //----------------------------------------------------------------
+
 
 #endif

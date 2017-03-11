@@ -103,9 +103,9 @@ int main(int argc, char *argv[]){
 
     gpu->extensions.Print();
 
-    CDevice device = gpu->CreateDevice(1, 0, 0, 0);           // create logical device with 1 present-queue
-    CSwapchain swapchain(&device, surface, 3);                // create swapchain with tripple-buffering
-    swapchain.Print();
+    //CDevice device = gpu->CreateDevice(1, 0, 0, 0);           // create logical device with 1 present-queue
+    //CSwapchain swapchain(&device, surface, 3);                // create swapchain with tripple-buffering
+    //swapchain.Print();
 
     while(Window.ProcessEvents()){                            // Main event loop, runs until window is closed.
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);
