@@ -5,7 +5,7 @@ machine:
     PATH: $PATH:$ANDROID_NDK
 
 general:
-  build_dir: Samples/Sample1/android
+  build_dir: Examples/Example1/android
 
 dependencies:
   cache_directories:

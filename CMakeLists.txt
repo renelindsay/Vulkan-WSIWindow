@@ -9,5 +9,5 @@ endif()
 #=================================================================
 
 add_subdirectory(WSIWindow)
-add_subdirectory(Samples)
+add_subdirectory(Examples)
 

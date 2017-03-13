@@ -1,4 +1,4 @@
-project(Sample1)
+project(Example1)
 cmake_minimum_required(VERSION 2.8)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -16,3 +16,5 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} WSIWindow)
 #-------------------------------------------
+
+

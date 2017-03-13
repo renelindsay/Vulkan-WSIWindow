@@ -86,10 +86,6 @@ endif()
 #=============================WINDOWS=============================
 if(WIN32)
     add_definitions(-DVK_USE_PLATFORM_WIN32_KHR)
-    #set(VULKAN_SDK $ENV{VULKAN_SDK} CACHE PATH "Path to the Vulkan SDK.")
-    #target_link_libraries(${LIBRARY_NAME} "${VULKAN_SDK}/bin/vulkan-1.lib")
-    #target_include_directories(${LIBRARY_NAME} PUBLIC "${VULKAN_SDK}/include")
-
     set (VULKAN_LOADER_NAME "vulkan-${MAJOR}")
 endif()
 #=================================================================

@@ -24,15 +24,15 @@
  - Linux Mir
 
 ## Features
- - Create a Vulkan window. (WSIWindow class)
- - Create a Vulkan instance. (CInstance class)
- - Load WSI Surface extensions (CExtensions class)
- - Load Validation Layers for debugging (CLayers class)
- - Print Vulkan Validation Debug Reports. (CDebugReport class)
- - Mouse input
- - Keyboard input (keycodes or localized text)
- - Window management
- - Multi-touch input
+ - Create a Vulkan window.
+ - Create a Vulkan instance.
+ - Load Layers and Extensions.
+ - Print Vulkan Validation Debug Reports.
+ - Create Logical device and queues.
+ - Mouse input.
+ - Keyboard input. (keycodes or localized text)
+ - Window management.
+ - Multi-touch input.
 
 #### Todo (Contributions welcome)
  - Full screen mode
@@ -43,7 +43,7 @@ Please see the [BUILD.md](BUILD.md) document for details on how to build WSI-Win
 
 ## Overview
 
-WSI-Window has a very modular design. It consists of a few loosely coupled classes, which abstracts away much of the tedious, platform-specific boiler-plate code, when creating a Vulkan application.  For example, WSI-Window requires a valid VkInstance as input, when creating a VkSurfaceKHR, which you can get from the optional CInstance class.  Alternatively, you may create the VkInstance yourself, by calling Vulkan directly. However, if you do, it is up to you to set up Validation, and ensure the correct layers and extensions are loaded for your target platform.
+WSI-Window has a very modular design. It consists of a few loosely coupled classes, which abstracts away much of the tedious, platform-specific boiler-plate code, when creating a Vulkan application.  For example, WSI-Window requires a valid VkInstance as input, when creating a VkSurfaceKHR, which you can get from the optional CInstance class.  Alternatively, you may create the VkInstance yourself, by calling Vulkan directly. However, if you do, it is up to you to set up Validation, and ensure the correct layers and extensions are loaded for your target platforms.
 
 ![WSI-Window diagram](./WSIWindow/docs/WSIWindow.png "WSI-Window")
 
@@ -54,7 +54,7 @@ The WSIWindow class creates a Vulkan window, and provides function calls to quer
 WSIWindow provides member functions for setting the window width, height, position and title.  These dimensions only apply to Linux and Windows, but are ignored on Android.
 However, right after window creation, the OnResizeEvent callback will be triggered, to return the actual window dimensions. 
 
-The "GetSurface" member function takes a VkInstance as input (from CInstance), and returns a CSurface instance, which contains the VkSurfaceKHR of the window.  CSurface also provides the CanPresent() funtion, which wraps the `vkGetPhysicalDeviceSurfaceSupportKHR` function. When creating a Vulkan queue, use CanPresent() to check if the queue family can present to this surface.
+The "GetSurface()" member function takes a VkInstance as input (from CInstance), and returns a CSurface instance, which contains the VkSurfaceKHR of the window.  CSurface also provides the CanPresent() funtion, which wraps the `vkGetPhysicalDeviceSurfaceSupportKHR` function. When creating a Vulkan queue, use CanPresent() to check if the queue family can present to this surface.
 Alternatively, WSIWindow also contains a similar CanPresent() member function, which wraps the set of `vkGetPhysicalDevice***PresentationSupportKHR` funcions, and can be used to check queue compatibility BEFORE creating the VkSurfaceKHR.  
   
   
@@ -99,6 +99,8 @@ Also, the following extensions are loaded where available:
  > `VK_KHR_debug_report. . ` (When validation is enabled)   
  
 If you need direct control over which layers and extensions to load, use the CLayers and CExtensions classes to enumerate, display and pick the items you want, and then pass them to the CInstance constructor.
+The VkInstance is used in 2 places: Pass it to WSIWindow.GetSurface() to get the VkSurfaceKHR, and pass it to CPhysicalDevices,
+to enumerate the available GPUs.
 
 ### CLayers class
 The CLayers class wraps "vkEnumerateInstanceLayerProperties" to simplify enumerating, and picking instance layers to load.  On creation, it contains a list of available instance layers, and provides functions for picking which ones to load. Here are some of the useful functions:  
@@ -112,9 +114,6 @@ The CLayers class wraps "vkEnumerateInstanceLayerProperties" to simplify enumera
 The CExtensions class wraps "vkEnumerateInstanceExtensionProperties" in much the same way as CLayers wraps the layers.
 It provides the same functions as CLayers, for picking  extensions to load, and may also be passed to the CInstance constructor.
 
-
-
-
 ### Vulkan Validation Layers and Logging
 WSIWindow makes use of Validation Layers, via the VK_KHR_debug_report extension, to display helpful, color-coded log messages, when Vulkan is used incorrectly. (Errors / Warnings / Info / etc.)  By default, WSIWindow enables standard validation layers, but they may be turned off for better runtime performance. There's also a CMAKE option to remove Validation code from the executable, for even faster execution, but it is highly recommended that you make use of Validation during development.  
 
@@ -127,6 +126,14 @@ Here are some examples of LOG* message usage:
         LOGI("Info message\n");     // Info is printed in green
 *(See Validation.h for more..)*  
 On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDATION" option in cmake-gui, or QtCreator -> Projects.  On Android Studio, the option is under: Build -> Select Build Variant -> noValidateDebug.
+
+### CPhysicalDevices class
+The CPhysicalDevices class wraps an array of VkPhysicalDevice objects, and is used to enumerate the available GPUs, and their properties, features and available queues.  It requires a VkInstance as input, which you can acquire from the CInstance class.
+Use the FindPresentable() member function, to find which CPU can present to a given window surface (VkSurfaceKHR), and use it to create a Logical device instance. (CDevice)
+
+### CDevice class
+The CDevice class takes the chosen GPU (CPhysicalDevice) from CPhysicalDevices, and allows you to create one or more queues of specified types, using the AddQueue() function. Optionally, you can pass in a VkSurfaceKHR to this function, if you want the queue to be presentable.  Available queue types is system specific, and AddQueue() returns 0 if the current system is unable to create a queue of the specified type, in which a case you may have to fall back to an alternative queue configuration.  
+eg. If AddQueue() fails to create a Presentable Graphics queue, you may have to create separate queues for graphics and presentation.
 
 ## Examples
 ### Example 1: Create a Vulkan instance, with default layers and extensions:
@@ -234,7 +241,7 @@ On Desktop, Validation layers may be disabled by unselecting the "ENABLE_VALIDAT
             void OnResizeEvent(uint16_t width, uint16_t height){
                 printf("Window Resize: width=%4d height=%4d\n", width, height);
             }
-        };&deg;&deg;&deg;
+        };
 
         int main(){
             CInstance Inst;                                  // Create a Vulkan Instance

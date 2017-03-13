@@ -1,7 +1,8 @@
 /*
 *--------------------------------------------------------------------------
-* Copyright (c) 2015-2016 Valve Corporation
-* Copyright (c) 2015-2016 LunarG, Inc.
+* Copyright (c) 2016 Valve Corporation
+* Copyright (c) 2016 LunarG, Inc.
+* Copyright (c) 2016-2017 Rene Lindsay
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Author: Rene Lindsay <rene@lunarg.com>
+* Author: Rene Lindsay <rjklindsay@gmail.com>
 *
 */
 
@@ -108,6 +109,7 @@ void ShowVkResult(VkResult err) {}
 VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugReportFn(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
         size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData) {
+    if(objType == VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_EXT && msgCode == 1) return false;
     char buf[512];
     snprintf(buf,sizeof(buf),"[%s] Code %d : %s\n", pLayerPrefix, msgCode, pMsg);
     switch(msgFlags){

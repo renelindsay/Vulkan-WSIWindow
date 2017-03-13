@@ -1,7 +1,8 @@
 ﻿/*
 *--------------------------------------------------------------------------
-* Copyright (c) 2015-2016 Valve Corporation
-* Copyright (c) 2015-2016 LunarG, Inc.
+* Copyright (c) 2016 Valve Corporation
+* Copyright (c) 2016 LunarG, Inc.
+* Copyright (c) 2016-2017 Rene Lindsay
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Author: Rene Lindsay <rene@lunarg.com>
+* Author: Rene Lindsay <rjklindsay@gmail.com>
 *
 *--------------------------------------------------------------------------
 * CInstance creates a Vulkan vkInstance, and loads appropriate
@@ -53,7 +54,7 @@ typedef unsigned int uint;
 // clang-format off
 //--------------------------CPickList-----------------------------
 // Used for picking items from an enumerated list.
-// ( See: CLayers / CExtensions )
+// ( See: CLayers / CExtensions / CDeviceExtensions )
 class CPickList {
   protected:
     vector<char*> pick_list;
@@ -91,6 +92,15 @@ struct CExtensions : public CPickList {
     char* Name(uint32_t inx) { return item_list[inx].extensionName; }
     uint32_t Count() { return (uint32_t)item_list.size(); }
     void     Print() { CPickList::Print("Extensions"); }
+};
+//----------------------------------------------------------------
+//----------------------Device Extensions-------------------------
+struct CDeviceExtensions : public CPickList {
+    vector<VkExtensionProperties> item_list;
+    void Init(VkPhysicalDevice phy, const char* layerName = NULL);
+    char* Name(uint32_t inx) { return item_list[inx].extensionName; }
+    uint32_t Count() { return (uint32_t)item_list.size(); }
+    void     Print() { CPickList::Print("Device-Extensions "); }
 };
 //----------------------------------------------------------------
 //---------------------------CInstance----------------------------

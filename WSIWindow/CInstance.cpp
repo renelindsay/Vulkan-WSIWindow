@@ -1,7 +1,8 @@
 ﻿/*
 *--------------------------------------------------------------------------
-* Copyright (c) 2015-2016 Valve Corporation
-* Copyright (c) 2015-2016 LunarG, Inc.
+* Copyright (c) 2016 Valve Corporation
+* Copyright (c) 2016 LunarG, Inc.
+* Copyright (c) 2016-2017 Rene Lindsay
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Author: Rene Lindsay <rene@lunarg.com>
+* Author: Rene Lindsay <rjklindsay@gmail.com>
 *
 *--------------------------------------------------------------------------
 */
@@ -105,6 +106,21 @@ CExtensions::CExtensions(const char* layer_name) {
 }
 //----------------------------------------------------------------
 
+//----------------------Device Extensions-------------------------
+void CDeviceExtensions::Init(VkPhysicalDevice phy, const char* layer_name) {
+    VkResult result;
+    do {
+        uint count = 0;
+        result = vkEnumerateDeviceExtensionProperties(phy, layer_name, &count, NULL);                  // Get list size
+        if (result == VK_SUCCESS && count > 0) {                                                       //
+            item_list.resize(count);                                                                   // Resize buffer
+            result = vkEnumerateDeviceExtensionProperties(phy, layer_name, &count, item_list.data());  // Fetch list
+        }
+    } while (result == VK_INCOMPLETE); // If list is incomplete, try again.
+    VKERRCHECK(result);                // report errors
+}
+//----------------------------------------------------------------
+
 //---------------------------CInstance----------------------------
 CInstance::CInstance(const bool enable_validation, const char* app_name, const char* engine_name) {
     CLayers layers;
@@ -114,7 +130,6 @@ CInstance::CInstance(const bool enable_validation, const char* app_name, const c
         layers.Pick({"VK_LAYER_GOOGLE_threading",
                      "VK_LAYER_LUNARG_parameter_validation",
                      "VK_LAYER_LUNARG_object_tracker",
-                     "VK_LAYER_LUNARG_image",
                      "VK_LAYER_LUNARG_core_validation",
                      "VK_LAYER_LUNARG_swapchain",
                      "VK_LAYER_GOOGLE_unique_objects"});

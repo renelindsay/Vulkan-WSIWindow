@@ -1,7 +1,8 @@
 /*
 *--------------------------------------------------------------------------
-* Copyright (c) 2015-2016 Valve Corporation
-* Copyright (c) 2015-2016 LunarG, Inc.
+* Copyright (c) 2016 Valve Corporation
+* Copyright (c) 2016 LunarG, Inc.
+* Copyright (c) 2016-2017 Rene Lindsay
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Author: Rene Lindsay <rene@lunarg.com>
+* Author: Rene Lindsay <rjklindsay@gmail.com>
 *
 *--------------------------------------------------------------------------
 * FIFO Buffer is used in the few cases where event messages need to be buffered.
