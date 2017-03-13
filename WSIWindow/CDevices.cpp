@@ -1,15 +1,7 @@
 ﻿#include "CDevices.h"
 
-//-------------------------CQueueFamily---------------------------
-void CPhysicalDevice::CQueueFamily::Print(uint index) {
-    uint flags = properties.queueFlags;
-    printf("\t\tQueue-family:%d  count:%2d  present:%s  flags:[ %s%s%s%s]\n", index, properties.queueCount, presentable ? "Y" : "N",
-        (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
-        (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "");
-}
-//----------------------------------------------------------------
 //------------------------CPhysicalDevice-------------------------
-CPhysicalDevice::CPhysicalDevice() : handle(0), properties(), features(), extensions(), presentable() {}
+CPhysicalDevice::CPhysicalDevice() : handle(0), properties(), features(), extensions() {}
 
 const char* CPhysicalDevice::VendorName() const {
     struct {const uint id; const char* name;} vendors[] =
@@ -18,18 +10,20 @@ const char* CPhysicalDevice::VendorName() const {
     return "";
 }
 
-int CPhysicalDevice::FindQueueFamily(VkQueueFlags flags, bool presentable){
+// Find queue-family with requred flags, and can present to given surface. (if provided)
+// Returns the QueueFamily index, or -1 if not found.
+int CPhysicalDevice::FindQueueFamily(VkQueueFlags flags, VkSurfaceKHR surface){
     repeat (queue_families.size()) {
-        const VkQueueFamilyProperties& family_props = queue_families[i].properties;
-        if(presentable && !queue_families[i].presentable) continue;
-        if((family_props.queueFlags & flags) == flags) return i;
+        VkBool32 can_present = false;
+        if (queue_families[i].queueFlags & flags != flags) continue;
+        if (surface) VKERRCHECK(vkGetPhysicalDeviceSurfaceSupportKHR(handle, i, surface, &can_present));
+        if (!!surface == !!can_present) return i;
     }
     return -1;
 }
 //----------------------------------------------------------------
 //------------------------CPhysicalDevices------------------------
-CPhysicalDevices::CPhysicalDevices(const CSurface& surface) {
-    VkInstance instance = surface.instance;
+CPhysicalDevices::CPhysicalDevices(const VkInstance instance) {
     VkResult result;
     uint gpu_count = 0;
     vector<VkPhysicalDevice> gpus;
@@ -56,26 +50,17 @@ CPhysicalDevices::CPhysicalDevices(const CSurface& surface) {
         gpu.extensions.Init(gpu);
         gpu.extensions.Pick(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-        //--Get Queue Families--
+        // Get Queue Family properties
         uint family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(gpu, &family_count, NULL);
-        vector<VkQueueFamilyProperties> qf_props(family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(gpu, &family_count, qf_props.data());
-
         gpu.queue_families.resize(family_count);
-        repeat(family_count){
-            auto& family = gpu.queue_families[i];
-            family.properties = qf_props[i];
-            family.presentable = surface.CanPresent(gpu.handle, i);
-            if (family.presentable) gpu.presentable = true;
-        }
-        //----------------------
+        vkGetPhysicalDeviceQueueFamilyProperties(gpu, &family_count, gpu.queue_families.data());
     }
 }
 
-CPhysicalDevice* CPhysicalDevices::FindPresentable() {
+CPhysicalDevice* CPhysicalDevices::FindPresentable(VkSurfaceKHR surface) {
     for (auto& gpu : gpu_list)
-        if (gpu.presentable) return &gpu;
+        if (gpu.FindQueueFamily(0, surface) >= 0 ) return &gpu;
     return 0;
 }
 
@@ -86,34 +71,33 @@ void CPhysicalDevices::Print(bool show_queues) {
         VkPhysicalDeviceProperties& props = gpu.properties;
         const char* devType[]{"OTHER", "INTEGRATED", "DISCRETE", "VIRTUAL", "CPU"};
         const char* vendor = gpu.VendorName();
-
-        color(gpu.presentable ? eRESET : eFAINT);
-        printf("\t%s", gpu.presentable ? cTICK : " ");
-        printf(" %d: %s %s %s\n", i, devType[props.deviceType], vendor, props.deviceName);
-        //if (show_queues) gpu.queue_families.Print();
+        printf("\t%d: %s %s %s\n", i, devType[props.deviceType], vendor, props.deviceName);
         if(show_queues){
             repeat(gpu.queue_families.size()){
-                gpu.queue_families[i].Print(i);
+                VkQueueFamilyProperties& props = gpu.queue_families[i];
+                uint flags = props.queueFlags;
+                printf("\t\tQueue-family:%d  count:%2d  flags:[ %s%s%s%s]\n", i, props.queueCount,
+                    (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
+                    (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "");
             }
         }
-        color(eRESET);
     }
 }
 //----------------------------------------------------------------
 
 //-----------------------------CDevice----------------------------
-CQueue* CDevice::AddQueue(VkQueueFlags flags, bool presentable) {
-    uint f_inx = gpu.FindQueueFamily(flags, presentable);        // Find correct queue family
-    if (f_inx < 0) return 0;                                     // exit if not found
-    uint max = gpu.queue_families[f_inx].properties.queueCount;  // max number of queues
-    uint q_inx = FamilyQueueCount(f_inx);                        // count queues from this family
-    if (q_inx == max) return 0;                                  // exit if too many queues
-    CQueue queue = {0, f_inx, q_inx, flags, presentable};        // create queue
-    queues.push_back(queue);                                     // add to queue list
-    Create();                                                    // create logical device
-
-    LOGI("Queue: %d  flags: [ %s%s%s%s]\n", q_inx, (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
-                                                   (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "");
+CQueue* CDevice::AddQueue(VkQueueFlags flags, VkSurfaceKHR surface) {
+    uint f_inx = gpu.FindQueueFamily(flags, surface);                                        // Find correct queue family
+    if (f_inx < 0) { LOGW("Could not create queue with requested properties."); return 0; }  // exit if not found
+    uint max = gpu.queue_families[f_inx].queueCount;                                         // max number of queues
+    uint q_inx = FamilyQueueCount(f_inx);                                                    // count queues from this family
+    if (q_inx == max) { LOGW("No more queues available from this family."); return 0; }      // exit if too many queues
+    CQueue queue = {0, f_inx, q_inx, flags, !!surface};                                      // create queue
+    queues.push_back(queue);                                                                 // add to queue list
+    Create();                                                                                // create logical device
+    LOGI("Queue: %d  flags: [ %s%s%s%s]\n", q_inx,
+         (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
+         (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "");
 }
 
 uint CDevice::FamilyQueueCount(uint family) {
@@ -158,6 +142,17 @@ void CDevice::Destroy(){
     handle = 0;
     //LOGI("Logical device destroyed\n");
 }
+
+CDevice::CDevice(CPhysicalDevice gpu) : handle() {
+    this->gpu = gpu;
+    LOGI("Logical Device using GPU: %s\n",gpu.properties.deviceName);
+}
+
+CDevice::~CDevice() {
+    Destroy();
+    LOGI("Logical device destroyed\n");
+}
+
 
 /*
 void CDevice::Print() {  // List created queues

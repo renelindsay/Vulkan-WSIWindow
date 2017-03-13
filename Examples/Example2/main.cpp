@@ -67,9 +67,15 @@ int main(int argc, char *argv[]) {
     Window.SetWinSize(500, 500);                       // Set the window size (Desktop)
     Window.SetWinPos(0, 0);                            // Set the window position to top-left
     CSurface surface = Window.GetSurface(instance);    // Create the Vulkan surface
-    CPhysicalDevices gpus(surface);                    // Enumerate GPUs, and their properties
-    CPhysicalDevice *gpu = gpus.FindPresentable();     // Find which GPU, can present to the given surface.
-                                                       // (HINT: Its the one running the desktop.)
+
+//    CPhysicalDevices gpus(surface);                    // Enumerate GPUs, and their properties
+//    CPhysicalDevice *gpu = gpus.FindPresentable();     // Find which GPU, can present to the given surface.
+//                                                       // (HINT: Its the one running the desktop.)
+
+    CPhysicalDevices gpus(instance);                       // Enumerate GPUs, and their properties
+    CPhysicalDevice *gpu = gpus.FindPresentable(surface);  // Find which GPU, can present to the given surface.
+
+
     gpus.Print();
     if (!gpu) {
         _LOGE("No devices can present to this suface.");

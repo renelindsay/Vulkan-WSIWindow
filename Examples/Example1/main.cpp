@@ -40,28 +40,25 @@ class MyWindow : public WSIWindow {
 };
 
 int main(int argc, char *argv[]){
-    setvbuf(stdout, NULL, _IONBF, 0);                // Prevent printf buffering in QtCreator
+    setvbuf(stdout, NULL, _IONBF, 0);                    // Prevent printf buffering in QtCreator
     printf("WSI-Window\n");
     LOGW("Test Warnings\n");
 
-    CInstance instance(true);                        // Create a Vulkan Instance
-    instance.DebugReport.SetFlags(14);               // Select validation-message types
-    MyWindow Window;                                 // Create a Vulkan window
-    Window.SetTitle("WSI-Window Example1");          // Set the window title
-    Window.SetWinSize(640, 480);                     // Set the window size (Desktop)
-    Window.SetWinPos(0, 0);                          // Set the window position to top-left
-    Window.ShowKeyboard(true);                       // Show soft-keyboard (Android)
-    CSurface surface = Window.GetSurface(instance);  // Create the Vulkan surface
-    CPhysicalDevices gpus(surface);                  // Enumerate GPUs, and their properties
-    CPhysicalDevice *gpu = gpus.FindPresentable();   // Find which GPU, can present to the given surface.
-    gpus.Print(true);
+    CInstance instance(true);                            // Create a Vulkan Instance
+    instance.DebugReport.SetFlags(14);                   // Select validation-message types
+    MyWindow Window;                                     // Create a Vulkan window
+    Window.SetTitle("WSI-Window Example1");              // Set the window title
+    Window.SetWinSize(640, 480);                         // Set the window size (Desktop)
+    Window.SetWinPos(0, 0);                              // Set the window position to top-left
+    Window.ShowKeyboard(true);                           // Show soft-keyboard (Android)
+    VkSurfaceKHR surface = Window.GetSurface(instance);  // Create the Vulkan surface
 
-    CDevice device(*gpu);
-    CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, true);  // Create the present-queue
-    //CQueue* queue2 = device.AddQueue(VK_QUEUE_COMPUTE_BIT);
+    CPhysicalDevices gpus(instance);                       // Enumerate GPUs, and their properties
+    gpus.Print(true);                                      // Show available GPUs and their queues
+    CPhysicalDevice *gpu = gpus.FindPresentable(surface);  // Find which GPU, can present to the given surface.
 
-    //bool presentable=Window.CanPresent(gpus[1], 0);
-    //printf("Presentable=%s\n", presentable ? "True" : "False");
+    CDevice device(*gpu);                                             // Create Logical device on selected gpu
+    CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
 
     while(Window.ProcessEvents()){                            // Main event loop, runs until window is closed.
         bool key_pressed = Window.GetKeyState(KEY_LeftShift);

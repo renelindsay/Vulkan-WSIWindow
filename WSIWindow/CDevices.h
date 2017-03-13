@@ -32,27 +32,21 @@
 
 //------------------------CPhysicalDevice-------------------------
 class CPhysicalDevice {
-    struct CQueueFamily {
-        bool presentable = false;
-        VkQueueFamilyProperties properties;
-        void Print(uint index);
-    };
-
   public:
     CPhysicalDevice();
     const char* VendorName() const;
-    VkPhysicalDevice           handle;          // (RO)
-    VkPhysicalDeviceProperties properties;      // properties and limits (RO)
-    VkPhysicalDeviceFeatures   features;        // list of available features (RO)
-    bool                       presentable;     // has presentable queues (RO)
-    vector<CQueueFamily>       queue_families;  // array of queue families (RO)
-
-    CDeviceExtensions        extensions;             // picklist
-    VkPhysicalDeviceFeatures enabled_features = {};  // Set required features.   TODO: finish this.
+    // -- Read-only properties --
+    VkPhysicalDevice                handle;
+    VkPhysicalDeviceProperties      properties;      // properties and limits
+    VkPhysicalDeviceFeatures        features;        // list of available features
+    vector<VkQueueFamilyProperties> queue_families;  // array of queue families
     // VkSurfaceCapabilitiesKHR   surface_caps;
+    // -- Configurable properties --
+    CDeviceExtensions        extensions;             // picklist: select extensions to load (Defaults to "VK_KHR_swapchain" only.)
+    VkPhysicalDeviceFeatures enabled_features = {};  // Set required features.   TODO: finish this.
 
     operator VkPhysicalDevice() const { return handle; }
-    int FindQueueFamily(VkQueueFlags flags, bool presentable = false);  // Returns a QueueFamlyIndex, or -1 if none found.
+    int FindQueueFamily(VkQueueFlags flags, VkSurfaceKHR surface = 0);  // Returns a QueueFamlyIndex, or -1 if none found.
 };
 //----------------------------------------------------------------
 //------------------------CPhysicalDevices------------------------
@@ -60,9 +54,9 @@ class CPhysicalDevices {
     vector<CPhysicalDevice> gpu_list;
 
    public:
-    CPhysicalDevices(const CSurface& surface);
+    CPhysicalDevices(const VkInstance instance);
     uint32_t Count() { return (uint32_t)gpu_list.size(); }
-    CPhysicalDevice* FindPresentable();  // Returns first device which is able to present to the given surface, or null if none.
+    CPhysicalDevice* FindPresentable(VkSurfaceKHR surface);  // Returns first device able to present to surface, or null if none.
     CPhysicalDevice& operator[](const int i) { return gpu_list[i]; }
     void Print(bool show_queues = false);
 };
@@ -87,9 +81,9 @@ class CDevice {
     void Destroy();
 
    public:
-    CDevice(CPhysicalDevice gpu) : handle() { this->gpu = gpu; }
-    ~CDevice() { Destroy(); }
-    CQueue* AddQueue(VkQueueFlags flags, bool presentable = false);  // returns 0 if failed
+    CDevice(CPhysicalDevice gpu);
+    ~CDevice();
+    CQueue* AddQueue(VkQueueFlags flags, VkSurfaceKHR surface = 0);  // returns 0 if failed
 };
 //----------------------------------------------------------------
 

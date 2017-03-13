@@ -79,14 +79,6 @@ void WindowImpl::TextInput(bool enabled) { textinput = enabled; }
 
 bool CSurface::CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) const {
     VkBool32 can_present = false;
-//#ifdef __LINUX__
-//    uint gpu_count = 0;
-//    vkEnumeratePhysicalDevices(instance, &gpu_count, NULL);  // If more than 1 gpu is found,
-//    if(gpu_count > 1) stderr = freopen(NULL, "r", stderr);  //  mute "Buggy applications may crash" warnings from Mesa
-//    VKERRCHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, queue_family, surface, &can_present));
-//    stderr = freopen(NULL, "a+", stderr);  // Re-enable stderr
-//#else
     VKERRCHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, queue_family, surface, &can_present));
-//#endif
     return !!can_present;
 }
