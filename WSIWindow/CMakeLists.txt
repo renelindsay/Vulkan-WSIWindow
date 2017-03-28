@@ -66,6 +66,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             target_link_libraries(${LIBRARY_NAME} ${X11_Xinput_LIB})
             add_definitions(-DENABLE_MULTITOUCH)
         endif()
+        #---XRandR---
+        find_package(Xrandr)
+        target_link_libraries(${LIBRARY_NAME} ${X11_Xrandr_LIB})
+        #------------
     endif()
 
 #    if (BUILD_WSI_XLIB_SUPPORT)

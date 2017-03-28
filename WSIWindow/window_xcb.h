@@ -33,6 +33,7 @@
 //#include <X11/Xlib.h>           // XLib only
 #include <X11/Xlib-xcb.h>         // Xlib + XCB
 #include <xkbcommon/xkbcommon.h>  // Keyboard
+#include <X11/extensions/Xrandr.h>
 //-------------------------------------------------
 #ifdef ENABLE_MULTITOUCH
 #include <X11/extensions/XInput2.h>  // MultiTouch
@@ -148,6 +149,22 @@ Window_xcb::Window_xcb(const char* title, uint width, uint height) {
     setup = xcb_get_setup(xcb_connection);
     xcb_screen = (xcb_setup_roots_iterator(setup)).data;
     XSetEventQueueOwner(display, XCBOwnsEventQueue);
+    //------------------
+
+    //------XRandR------
+    // Get the display resolution and refresh rate.
+    {
+        int num_sizes;
+        Window root = RootWindow(display, 0);
+        XRRScreenSize *xrrs = XRRSizes(display, 0, &num_sizes);
+        XRRScreenConfiguration *conf = XRRGetScreenInfo(display, root);
+        short rate = XRRConfigCurrentRate(conf);
+        Rotation rotation;
+        SizeID size_id = XRRConfigCurrentConfiguration(conf, &rotation);
+        int width = xrrs[size_id].width;
+        int height = xrrs[size_id].height;
+        printf("XDisplay: %d x %d @ %dHz\n", width, height, rate);
+    }
     //------------------
 
     uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
