@@ -95,12 +95,13 @@ CQueue* CDevice::AddQueue(VkQueueFlags flags, VkSurfaceKHR surface) {
     uint max = gpu.queue_families[f_inx].queueCount;                                         // max number of queues
     uint q_inx = FamilyQueueCount(f_inx);                                                    // count queues from this family
     if (q_inx == max) { LOGW("No more queues available from this family."); return 0; }      // exit if too many queues
-    CQueue queue = {0, f_inx, q_inx, flags, !!surface};                                      // create queue
+    CQueue queue = {0, f_inx, q_inx, flags, surface};                                        // create queue
     queues.push_back(queue);                                                                 // add to queue list
     Create();                                                                                // create logical device
-    LOGI("Queue: %d  flags: [ %s%s%s%s]\n", q_inx,
+    LOGI("Queue: %d  flags: [ %s%s%s%s]%s\n", q_inx,
          (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
-         (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "");
+         (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "",
+         surface ? " (can present)" : "");
     return &queues.back();
 }
 

@@ -60,8 +60,7 @@ void color(eColor color) {  // Sets Terminal text color (Win32/Linux)
 //  In Debug mode, convert a VkResult return value to a string.
 const char* VkResultStr(VkResult err) {
     switch (err) {
-#define STR(r) \
-    case r: return #r
+#define STR(r) case r: return #r
         STR(VK_SUCCESS);      // 0
         STR(VK_NOT_READY);    // 1
         STR(VK_TIMEOUT);      // 2

@@ -172,7 +172,6 @@ eg. If AddQueue() fails to create a Presentable Graphics queue, you may have to 
         ✓ VK_LAYER_LUNARG_object_tracker
           VK_LAYER_LUNARG_screenshot
           VK_LAYER_GOOGLE_threading
-          VK_LAYER_LUNARG_image
           VK_LAYER_GOOGLE_unique_objects
           VK_LAYER_LUNARG_swapchain
         ✓ VK_LAYER_LUNARG_parameter_validation

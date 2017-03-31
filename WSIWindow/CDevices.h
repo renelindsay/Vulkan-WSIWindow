@@ -69,12 +69,13 @@ struct CQueue{
     uint         family;
     uint         index;
     VkQueueFlags flags;
-    bool         presentable;
+    VkSurfaceKHR surface;  // 0 if queue can not present
     operator VkQueue() const { return handle; }
 };
 //----------------------------------------------------------------
 //-----------------------------CDevice----------------------------
 class CDevice {
+    friend class CSwapchain;
     VkDevice        handle;
     CPhysicalDevice gpu;
     vector<CQueue>  queues;
@@ -86,6 +87,7 @@ class CDevice {
     CDevice(CPhysicalDevice gpu);
     ~CDevice();
     CQueue* AddQueue(VkQueueFlags flags, VkSurfaceKHR surface = 0);  // returns 0 if failed
+    operator VkDevice() const { return handle; }
 };
 //----------------------------------------------------------------
 
