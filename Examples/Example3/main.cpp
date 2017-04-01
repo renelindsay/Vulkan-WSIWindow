@@ -49,7 +49,8 @@ int main(int argc, char *argv[]) {
     CDevice device(*gpu);                                             // Create Logical device on selected gpu
     CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
 
-    CSwapchain swapchain(*gpu, device, surface);
+    //CSwapchain swapchain(*gpu, device, surface);
+    CSwapchain swapchain(*queue);
     //swapchain.Apply();
     swapchain.Print();
 

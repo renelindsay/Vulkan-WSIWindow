@@ -2,24 +2,32 @@
 
 int clamp(int val, int min, int max){ return (val < min ? min : val > max ? max : val); }
 
-CSwapchain::CSwapchain(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface, uint32_t image_count){
-    Init(gpu, device, surface, image_count);
+//CSwapchain::CSwapchain(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface){
+//    Init(gpu, device, surface);
+//}
+
+CSwapchain::CSwapchain(const CQueue& present_queue){
+    const CQueue& q = present_queue;
+    if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
+    Init(q.gpu, q.device, q.surface);
+    queue = q.handle;
 }
 
 CSwapchain::~CSwapchain(){
     if (swapchain) {
+        vkDeviceWaitIdle(device);
+        for(auto& buf : buffers)  vkDestroyImageView(device, buf.view, nullptr);
         vkDestroySwapchainKHR(device, swapchain, 0);
         LOGI("Swapchain destroyed\n");
-
-        for(auto& buf : buffers)  vkDestroyImageView(device, buf.view, nullptr);
     }
 }
 
-void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface, uint32_t image_count){
+void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface){
     this->gpu     = gpu;
     this->surface = surface;
     this->device  = device;
     swapchain     = 0;
+    renderpass    = 0;
 
     //--- surface caps ---
     VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
@@ -47,8 +55,8 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
                                     VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     SetExtent(64, 64);  // also initializes surface_caps
     SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
-    SetImageCount(image_count);
-    Apply();
+    SetImageCount(2);
+    //Apply();
 }
 
 void CSwapchain::SetExtent(uint32_t width, uint32_t height){
@@ -148,7 +156,14 @@ void CSwapchain::Print(){
     for (auto m : modes) print((m == mode) ? eRESET : eFAINT, "\t\t%s %s\n", (m == mode) ? cTICK : " ",mode_names[m]);
 }
 
+void CSwapchain::SetRenderPass(VkRenderPass renderpass){
+    this->renderpass = renderpass;
+    Apply();
+}
+
 void CSwapchain::Apply(){
+    assert(!!renderpass && "RendePass was not set.");
+
     vkDeviceWaitIdle(device);
     swapchain_info.oldSwapchain = swapchain;
     VKERRCHECK(vkCreateSwapchainKHR(device, &swapchain_info, nullptr, &swapchain));
@@ -166,27 +181,81 @@ void CSwapchain::Apply(){
     repeat(count){
         auto& buf = buffers[i];
         buf.image = images[i];
-
-        //--ImageView--
-        VkImageViewCreateInfo createInfo = {};
-        createInfo.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.pNext    = NULL;
-        createInfo.flags    = 0;
-        createInfo.image    = images[i];
-        createInfo.format   = swapchain_info.imageFormat;
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        createInfo.subresourceRange.baseMipLevel   = 0;
-        createInfo.subresourceRange.levelCount     = 1;
-        createInfo.subresourceRange.baseArrayLayer = 0;
-        createInfo.subresourceRange.layerCount     = 1;
-        //-------------
-        VKERRCHECK(vkCreateImageView(device, &createInfo, nullptr, &buf.view));
+        //---ImageView---
+        VkImageViewCreateInfo ivCreateInfo = {};
+        ivCreateInfo.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        ivCreateInfo.pNext    = NULL;
+        ivCreateInfo.flags    = 0;
+        ivCreateInfo.image    = images[i];
+        ivCreateInfo.format   = swapchain_info.imageFormat;
+        ivCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        ivCreateInfo.components = {};
+        ivCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        ivCreateInfo.subresourceRange.baseMipLevel   = 0;
+        ivCreateInfo.subresourceRange.levelCount     = 1;
+        ivCreateInfo.subresourceRange.baseArrayLayer = 0;
+        ivCreateInfo.subresourceRange.layerCount     = 1;
+        VKERRCHECK(vkCreateImageView(device, &ivCreateInfo, nullptr, &buf.view));
+        //---------------
+        //--Framebuffer--
+        VkFramebufferCreateInfo fbCreateInfo = {};
+        fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fbCreateInfo.attachmentCount = 1;
+        fbCreateInfo.pAttachments = &buf.view;
+        fbCreateInfo.width  = swapchain_info.imageExtent.width;
+        fbCreateInfo.height = swapchain_info.imageExtent.height;
+        fbCreateInfo.layers = 1;
+        fbCreateInfo.renderPass = renderpass;
+        VKERRCHECK(vkCreateFramebuffer(device, &fbCreateInfo, NULL, &buf.frameBuffer));
+        //---------------
     }
-
     if (!swapchain_info.oldSwapchain) LOGI("Swapchain created\n");
 }
+/*
+uint32_t CSwapchain::AcquireNextImage(VkSemaphore present_semaphore){
+    uint32_t index;
+    VKERRCHECK(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, present_semaphore, (VkFence)0, &index));
+    return index;
+}
+
+void CSwapchain::Present(VkQueue queue, uint32_t index) {
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = NULL;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &index;
+    VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
+}
+*/
+/*
+void CSwapchain::Present(VkSemaphore present_semaphore, VkQueue queue) {
+    uint32_t index;
+    VKERRCHECK(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, present_semaphore, (VkFence)0, &index));
+
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = NULL;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &index;
+    VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
+}
+*/
+CSwapchainBuffer& CSwapchain::AcquireNextImage(VkSemaphore present_semaphore){
+    assert(!!swapchain && !!renderpass);
+    VKERRCHECK(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, present_semaphore, (VkFence)0, &acquired_index));
+    return buffers[acquired_index];
+}
+
+void CSwapchain::Present() {
+    assert(!!swapchain && !!renderpass);
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.pNext = NULL;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &acquired_index;
+    VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
+}
+

@@ -65,17 +65,20 @@ class CPhysicalDevices {
 //----------------------------------------------------------------
 //-----------------------------CQueue-----------------------------
 struct CQueue{
-    VkQueue      handle;
-    uint         family;
-    uint         index;
-    VkQueueFlags flags;
-    VkSurfaceKHR surface;  // 0 if queue can not present
+    VkQueue         handle;
+    uint            family;   // queue family
+    uint            index;    // queue index
+    VkQueueFlags    flags;
+    VkSurfaceKHR    surface;  // 0 if queue can not present
+    VkDevice        device;   // (used by CSwapchain)
+    CPhysicalDevice gpu;      // (used by CSwapchain)
+
     operator VkQueue() const { return handle; }
 };
 //----------------------------------------------------------------
 //-----------------------------CDevice----------------------------
 class CDevice {
-    friend class CSwapchain;
+    //friend class CSwapchain;
     VkDevice        handle;
     CPhysicalDevice gpu;
     vector<CQueue>  queues;

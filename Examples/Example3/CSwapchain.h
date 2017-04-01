@@ -24,22 +24,26 @@ struct CSwapchainBuffer {
 class CSwapchain {
     VkPhysicalDevice   gpu;
     VkDevice           device;
+    VkQueue            queue;
     VkSurfaceKHR       surface;
     VkSwapchainKHR     swapchain;
+    VkRenderPass       renderpass;
 
     //VkSurfaceFormatKHR format;
     //VkPresentModeKHR   mode;
     //VkExtent2D         extent;
 
     std::vector<CSwapchainBuffer> buffers;
+    uint32_t acquired_index;  // index of last acquired image
 
-    void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface, uint32_t image_count = 2);  // defaults to tripple-buffering
+    void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
 
   public:
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainCreateInfoKHR swapchain_info;
 
-    CSwapchain(VkPhysicalDevice gpu, VkDevice device,VkSurfaceKHR surface, uint32_t image_count = 2);
+    //CSwapchain(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
+    CSwapchain(const CQueue& present_queue);
     ~CSwapchain();
 
     bool PresentMode(bool no_tearing, bool powersave = IS_ANDROID);  // ANDROID: default to power-save mode (limit to 60fps)
@@ -48,8 +52,18 @@ class CSwapchain {
     void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
     void SetExtent(uint32_t width, uint32_t height);
     bool SetImageCount(uint32_t image_count = 2);                    // 2=doublebuffer 3=tripplebuffer
+    void SetRenderPass(VkRenderPass renderpass);
+
     void Apply();
-    void Print();
+    void Print();    
+
+    //uint32_t AcquireNextImage(VkSemaphore present_semaphore);
+    //void Present(VkQueue queue, uint32_t index);
+
+    //void Present(VkSemaphore present_semaphore, VkQueue queue);
+
+    CSwapchainBuffer& AcquireNextImage(VkSemaphore present_semaphore = 0);
+    void Present();
 };
 
 #endif
