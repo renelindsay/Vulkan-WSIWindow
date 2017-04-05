@@ -117,6 +117,7 @@ void color(eColor color);
     #define  LOGI(...) _LOGI(__VA_ARGS__)      /*  Prints INFO messages in green  */
     #define  LOGW(...) _LOGW(__VA_ARGS__)      /*  Prints WARNINGs in yellow      */
     #define  LOGE(...) _LOGE(__VA_ARGS__)      /*  Prints ERRORs in red           */
+    #define ASSERT(EXPRESSION, ...) { if(!EXPRESSION) { _LOGE(__VA_ARGS__); printf("%s:%d\n", __FILE__, __LINE__); exit(0); }  }
 #else
     #define  LOG(...)  {}
     #define  LOGV(...) {}
@@ -124,6 +125,7 @@ void color(eColor color);
     #define  LOGI(...) {}
     #define  LOGW(...) {}
     #define  LOGE(...) {}
+    #define ASSERT(EXPRESSION, ...)
 #endif
 //----------------------------------------------------------------------------------
 

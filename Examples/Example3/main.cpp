@@ -26,8 +26,15 @@
 #include "CDevices.h"
 #include "CSwapchain.h"
 
+#include "triangle.h"
+
 //-- EVENT HANDLERS --
 class CWindow : public WSIWindow {
+  public:
+    CSwapchain* pSwapchain;
+    void OnResizeEvent(uint16_t width, uint16_t height) {
+        pSwapchain->SetExtent(width, height);
+    }
 
 };
 
@@ -37,7 +44,7 @@ int main(int argc, char *argv[]) {
     instance.DebugReport.SetFlags(14);                     // Error+Perf+Warning flags
     CWindow Window;                                        // Create a Vulkan window
     Window.SetTitle("WSI-Window Example3");                // Set the window title
-    Window.SetWinSize(500, 500);                           // Set the window size (Desktop)
+    Window.SetWinSize(640, 480);                           // Set the window size (Desktop)
     Window.SetWinPos(0, 0);                                // Set the window position to top-left
     VkSurfaceKHR surface = Window.GetSurface(instance);    // Create the Vulkan surface
     CPhysicalDevices gpus(instance);                       // Enumerate GPUs, and their properties
@@ -48,13 +55,24 @@ int main(int argc, char *argv[]) {
 
     CDevice device(*gpu);                                             // Create Logical device on selected gpu
     CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
-
-    //CSwapchain swapchain(*gpu, device, surface);
     CSwapchain swapchain(*queue);
-    //swapchain.Apply();
+    Window.pSwapchain = &swapchain;
+
+    CTriangle triangle;
+    triangle.device = device;
+    triangle.CreateRenderPass(swapchain.info.imageFormat);
+    triangle.CreateGraphicsPipeline(swapchain.GetExtent());
+
+    swapchain.SetImageCount(3);
+    swapchain.SetRenderPass(triangle.renderpass);
     swapchain.Print();
 
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
+        CSwapchainBuffer& buffer = swapchain.AcquireNext();
+        triangle.RecordCommandBuffer(buffer);
+        swapchain.Present();
     }
+
     return 0;
 }
+

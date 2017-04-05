@@ -10,15 +10,18 @@
 
 #include "CDevices.h"
 
-#define IS_ANDROID false // PC: default to low-latency (no fps limit
+#define IS_ANDROID false // PC: default to low-latency (no fps limit)
 #ifdef ANDROID
 #define IS_ANDROID true  // ANDROID: default to power-save (limit to 60fps)
 #endif
 
 struct CSwapchainBuffer {
-  VkImage       image;
-  VkImageView   view;
-  VkFramebuffer frameBuffer;
+  VkImage         image;
+  VkImageView     view;
+  VkFramebuffer   framebuffer;
+  VkExtent2D      extent;
+  VkCommandBuffer command_buffer;
+  VkFence         fence;
 };
 
 class CSwapchain {
@@ -28,21 +31,24 @@ class CSwapchain {
     VkSurfaceKHR       surface;
     VkSwapchainKHR     swapchain;
     VkRenderPass       renderpass;
-
-    //VkSurfaceFormatKHR format;
-    //VkPresentModeKHR   mode;
-    //VkExtent2D         extent;
+    VkCommandPool      command_pool;
 
     std::vector<CSwapchainBuffer> buffers;
     uint32_t acquired_index;  // index of last acquired image
+    bool is_acquired;
+
+    VkSemaphore acquire_semaphore;
+    VkSemaphore submit_semaphore;
 
     void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
+    void CreateCommandPool(uint32_t family);
+    void CreateCommandBuffers();
+    void Apply();
 
-  public:
+public:
     VkSurfaceCapabilitiesKHR surface_caps;
-    VkSwapchainCreateInfoKHR swapchain_info;
+    VkSwapchainCreateInfoKHR info;
 
-    //CSwapchain(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
     CSwapchain(const CQueue& present_queue);
     ~CSwapchain();
 
@@ -54,16 +60,12 @@ class CSwapchain {
     bool SetImageCount(uint32_t image_count = 2);                    // 2=doublebuffer 3=tripplebuffer
     void SetRenderPass(VkRenderPass renderpass);
 
-    void Apply();
+    VkExtent2D GetExtent(){return info.imageExtent;}
     void Print();    
 
-    //uint32_t AcquireNextImage(VkSemaphore present_semaphore);
-    //void Present(VkQueue queue, uint32_t index);
-
-    //void Present(VkSemaphore present_semaphore, VkQueue queue);
-
-    CSwapchainBuffer& AcquireNextImage(VkSemaphore present_semaphore = 0);
+    CSwapchainBuffer& AcquireNext();
     void Present();
+
 };
 
 #endif

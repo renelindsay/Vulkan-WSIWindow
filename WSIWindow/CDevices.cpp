@@ -63,7 +63,7 @@ CPhysicalDevices::CPhysicalDevices(const VkInstance instance) {
 CPhysicalDevice* CPhysicalDevices::FindPresentable(VkSurfaceKHR surface) {
     for (auto& gpu : gpu_list)
         if (gpu.FindQueueFamily(0, surface) >= 0 ) return &gpu;
-    LOGW("No devices can present to this suface.");
+    LOGW("No devices can present to this suface. (Is DRI3 enabled?)\n");
     return 0;
 }
 
@@ -137,7 +137,12 @@ void CDevice::Create() {
     device_create_info.ppEnabledExtensionNames = extensions.PickList();
     device_create_info.pEnabledFeatures        = &gpu.enabled_features;
     VKERRCHECK(vkCreateDevice(gpu, &device_create_info, nullptr, &handle));         // create device
-    for (auto& q : queues) vkGetDeviceQueue(handle, q.family, q.index, &q.handle);  // get queue handles
+    //for (auto& q : queues) vkGetDeviceQueue(handle, q.family, q.index, &q.handle);  // get queue handles
+    for (auto& q : queues) {
+        q.device = handle;
+        vkGetDeviceQueue(handle, q.family, q.index, &q.handle);  // get queue handles
+    }
+
 }
 
 void CDevice::Destroy(){
