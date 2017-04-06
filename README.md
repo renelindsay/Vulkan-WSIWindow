@@ -1,4 +1,4 @@
-![Renegade Logo](./WSIWindow/docs/renegade-vulkan-wsiwindow.png "Renegade")
+![Renegade Logo](./WSIWindow/docs/vulkan-wsiwindow.png "WSI-Window for Vulkan")
 
 
 # WSI-Window
@@ -21,7 +21,6 @@
 #### Todo (Contributions welcome)
  - Apple OS X / iOS
  - Linux Wayland
- - Linux Mir
 
 ## Features
  - Create a Vulkan window.
