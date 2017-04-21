@@ -43,9 +43,9 @@ CRenderpass::CSubpass::CSubpass(CRenderpass& renderpass):renderpass(renderpass),
 CRenderpass::CSubpass::operator VkSubpassDescription(){
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.inputAttachmentCount    = input_refs.size();
+    subpass.inputAttachmentCount    = (uint32_t)input_refs.size();
     subpass.pInputAttachments       = input_refs.data();
-    subpass.colorAttachmentCount    = color_refs.size();
+    subpass.colorAttachmentCount    = (uint32_t)color_refs.size();
     subpass.pColorAttachments       = color_refs.data();
     subpass.pResolveAttachments     = NULL;
     subpass.pDepthStencilAttachment = pdepth_ref;
@@ -83,17 +83,27 @@ void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes
 }
 
 // ----------------------------------Renderpass---------------------------------
-CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
+//CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
+CRenderpass::CRenderpass() : device(), renderpass(), active(false) {}
 CRenderpass::~CRenderpass() {Destroy();}
 
+void CRenderpass::Init(VkDevice device, VkFormat surface_format, VkFormat depth_format){
+  this->device = device;
+  this->surface_format = surface_format;
+  this->depth_format = depth_format;
+}
+
+
 uint32_t CRenderpass::AddColorAttachment(VkFormat format){
+    if(format == VK_FORMAT_UNDEFINED) format = surface_format;
     attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
-    return attachments.size()-1;
+    return (uint32_t)attachments.size()-1;
 }
 
 uint32_t CRenderpass::AddDepthAttachment(VkFormat format){
+    if(format == VK_FORMAT_UNDEFINED) format = depth_format;
     attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
-    return attachments.size()-1;
+    return (uint32_t)attachments.size()-1;
 }
 
 CRenderpass::CSubpass& CRenderpass::AddSubpass(vector<uint32_t> attachment_indexes){
@@ -114,30 +124,45 @@ void CRenderpass::AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass)
     dependencies.push_back(dependency);
 }
 
-void CRenderpass::Create(){
-    std::vector<VkSubpassDescription> subs;
-    for(auto& sub : subpasses) subs.push_back(sub);  // build list of subpasses
+void CRenderpass::Create(VkDevice device){
+    if(active) return;
+    this->device = device;
+    //Destroy();
+    // Build subpass array
+    std::vector<VkSubpassDescription> subs(subpasses.size());
+    repeat(subpasses.size()) subs[i] = subpasses[i];
 
     VkRenderPassCreateInfo rp_info = {};
     rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     rp_info.pNext = NULL;
     rp_info.flags = 0;
-    rp_info.attachmentCount = attachments.size();
+    rp_info.attachmentCount = (uint32_t)attachments.size();
     rp_info.pAttachments    = attachments.data();
-    rp_info.subpassCount    = subs.size();
+    rp_info.subpassCount    = (uint32_t)subs.size();
     rp_info.pSubpasses      = subs.data();
-    rp_info.dependencyCount = dependencies.size();
+    rp_info.dependencyCount = (uint32_t)dependencies.size();
     rp_info.pDependencies   = dependencies.data();
     VKERRCHECK(vkCreateRenderPass(device, &rp_info, nullptr, &renderpass));
+    LOGI("Renderpass created\n");
+    active = true;
 }
 
 void CRenderpass::Destroy(){
-    if(renderpass) vkDestroyRenderPass(device, renderpass, nullptr);
+    if(!active) return;
+    vkDestroyRenderPass(device, renderpass, nullptr);
+    renderpass = 0;
+    active = false;
     LOGI("Renderpass destroyed\n");
 }
 
 
-/*  // Minimal example of end-result
+
+
+
+
+
+/*  // Minimal RenderPass example
+
 void CreateRenderPass(VkFormat swapchainImageFormat) {
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format         = swapchainImageFormat;

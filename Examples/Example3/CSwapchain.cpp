@@ -39,7 +39,7 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     this->surface = surface;
     this->device  = device;
     swapchain     = 0;
-    renderpass    = 0;
+    //renderpass    = 0;
     is_acquired   = false;
 
     //--- surface caps ---
@@ -69,6 +69,7 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     SetExtent(64, 64);  // also initializes surface_caps
     SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
     SetImageCount(2);
+    renderpass.Init(device, info.imageFormat, GetSupportedDepthFormat(gpu));
     //Apply();
 }
 
@@ -179,13 +180,15 @@ void CSwapchain::Print(){
     for (auto m : modes) print((m == mode) ? eRESET : eFAINT, "\t\t%s %s\n", (m == mode) ? cTICK : " ",mode_names[m]);
 }
 
-void CSwapchain::SetRenderPass(VkRenderPass renderpass){
-    this->renderpass = renderpass;
-    Apply();
-}
+//void CSwapchain::SetRenderPass(VkRenderPass renderpass){
+//    this->renderpass = renderpass;
+//    Apply();
+//}
 
 void CSwapchain::Apply(){
-    assert(!!renderpass && "RendePass was not set.");
+    renderpass.Create(device);
+
+    //assert(!!renderpass && "RendePass was not set.");
     info.oldSwapchain = swapchain;
     VKERRCHECK(vkCreateSwapchainKHR(device, &info, nullptr, &swapchain));
 
@@ -259,7 +262,7 @@ void CSwapchain::Apply(){
 
 CSwapchainBuffer& CSwapchain::AcquireNext(){
     ASSERT(!is_acquired, "CSwapchain: Previous swapchain buffer has not yet been presented.\n");
-    ASSERT(!!renderpass, "CSwapchain: renderpass was not set.\n");
+    //ASSERT(!!renderpass, "CSwapchain: renderpass was not set.\n");
     while(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, &acquired_index) == VK_ERROR_OUT_OF_DATE_KHR)
         Apply();  // for Intel GPU
     CSwapchainBuffer& buf = buffers[acquired_index];

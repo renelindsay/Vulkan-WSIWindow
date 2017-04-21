@@ -59,23 +59,21 @@ int main(int argc, char *argv[]) {
     CSwapchain swapchain(*queue);
     Window.pSwapchain = &swapchain;
 
-    CRenderpass renderpass(device);
-    renderpass.AddColorAttachment(swapchain.info.imageFormat);     // 0
-    //renderpass.AddDepthAttachment(GetSupportedDepthFormat(*gpu));  // 1
-    //renderpass.AddSubpass({0, 1});
-    renderpass.AddSubpass({0});
-    renderpass.Create();
+    swapchain.renderpass.AddColorAttachment();
+    //swapchain.renderpass.AddDepthAttachment();
+    swapchain.renderpass.AddSubpass({0});
+    swapchain.Apply();
 
     CTriangle triangle;
     triangle.device = device;
     //triangle.CreateRenderPass(swapchain.info.imageFormat);
-    triangle.renderpass = renderpass;
+    triangle.renderpass = swapchain.renderpass;
     triangle.CreateGraphicsPipeline(swapchain.GetExtent());
 
     swapchain.SetImageCount(3);
-    swapchain.SetRenderPass(triangle.renderpass);
+    //swapchain.SetRenderPass(triangle.renderpass);
     swapchain.Print();
-
+//return 0;
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
         CSwapchainBuffer& buffer = swapchain.AcquireNext();
         triangle.RecordCommandBuffer(buffer);

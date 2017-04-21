@@ -67,25 +67,33 @@ class CRenderpass{
         void InputAttachment(uint32_t attachment_index);
         void InputAttachments(vector<uint32_t> attachment_indexes = {});
     };
+    VkDevice     device;
+    VkFormat     surface_format;
+    VkFormat     depth_format;
 
-    VkDevice device;
     VkRenderPass renderpass;
+    bool         active;
+
   public:
     std::vector<CSubpass>                subpasses;
     std::vector<VkAttachmentDescription> attachments;
     std::vector<VkSubpassDependency>     dependencies;
 
-    CRenderpass(VkDevice device);
+    CRenderpass();
     ~CRenderpass();
+    void Init(VkDevice device, VkFormat surface_format, VkFormat depth_format);
 
-    uint32_t AddColorAttachment(VkFormat format);
-    uint32_t AddDepthAttachment(VkFormat format);
+    uint32_t AddColorAttachment(VkFormat format = VK_FORMAT_UNDEFINED);
+    uint32_t AddDepthAttachment(VkFormat format = VK_FORMAT_UNDEFINED);
     CSubpass& AddSubpass(vector<uint32_t> attachment_indexes = {});
     void AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass);
 
-    void Create();
+    void Create(VkDevice device);
     void Destroy();
-    operator VkRenderPass () const { return renderpass; }
+    operator VkRenderPass () const {
+        ASSERT(active, "Swapchain.renderpass was not initialized. Call: CSwapchain.Apply(); before use.\n");
+        return renderpass;
+    }
 };
 
 #endif
