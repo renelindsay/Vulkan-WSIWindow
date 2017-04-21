@@ -1,3 +1,5 @@
+// * Copyright (C) 2017 by Rene Lindsay
+
 #include "CSwapchain.h"
 
 CSwapchain::CSwapchain(const CQueue& present_queue){
@@ -115,10 +117,8 @@ bool CSwapchain::SetImageCount(uint32_t image_count){  // set number of framebuf
     uint32_t count = max(image_count, surface_caps.minImageCount);                      //clamp to min limit
     if(surface_caps.maxImageCount > 0) count = min(count, surface_caps.maxImageCount);  //clamp to max limit
     info.minImageCount = count;
-    return (count == image_count);
-    //CreateFramebuffers(image_count);
-    //CreateBackBuffers(image_count);
     if(!!swapchain) Apply();
+    return (count == image_count);
 }
 
 // Returns the list of avialable present modes for this gpu + surface.

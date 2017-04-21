@@ -26,6 +26,8 @@
 #include "CDevices.h"
 #include "CSwapchain.h"
 
+#include "CRenderpass.h"
+
 #include "triangle.h"
 
 //-- EVENT HANDLERS --
@@ -35,7 +37,6 @@ class CWindow : public WSIWindow {
     void OnResizeEvent(uint16_t width, uint16_t height) {
         pSwapchain->SetExtent(width, height);
     }
-
 };
 
 int main(int argc, char *argv[]) {
@@ -58,9 +59,17 @@ int main(int argc, char *argv[]) {
     CSwapchain swapchain(*queue);
     Window.pSwapchain = &swapchain;
 
+    CRenderpass renderpass(device);
+    renderpass.AddColorAttachment(swapchain.info.imageFormat);     // 0
+    //renderpass.AddDepthAttachment(GetSupportedDepthFormat(*gpu));  // 1
+    //renderpass.AddSubpass({0, 1});
+    renderpass.AddSubpass({0});
+    renderpass.Create();
+
     CTriangle triangle;
     triangle.device = device;
-    triangle.CreateRenderPass(swapchain.info.imageFormat);
+    //triangle.CreateRenderPass(swapchain.info.imageFormat);
+    triangle.renderpass = renderpass;
     triangle.CreateGraphicsPipeline(swapchain.GetExtent());
 
     swapchain.SetImageCount(3);

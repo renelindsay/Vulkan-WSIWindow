@@ -18,7 +18,6 @@ class CTriangle {
 
     CTriangle();
     ~CTriangle();
-    void CreateRenderPass(VkFormat swapchainImageFormat);
     void CreateGraphicsPipeline(VkExtent2D extent = {64,64});
     void RecordCommandBuffer(CSwapchainBuffer& swapchain_buffer);
 };

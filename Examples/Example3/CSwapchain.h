@@ -1,8 +1,10 @@
 /*
+// Copyright (C) 2017 by Rene Lindsay
+*
 *  This unit wraps the swapchain.
 *
 *  WARNING: This unit is a work in progress.
-*  Interfaces are highly experimental and very likely to change.
+*  Interfaces are experimental and very likely to change.
 */
 
 #ifndef CSWAPCHAIN_H
@@ -18,8 +20,8 @@
 struct CSwapchainBuffer {
   VkImage         image;
   VkImageView     view;
-  VkFramebuffer   framebuffer;
   VkExtent2D      extent;
+  VkFramebuffer   framebuffer;
   VkCommandBuffer command_buffer;
   VkFence         fence;
 };
