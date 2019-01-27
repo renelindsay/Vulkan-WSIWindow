@@ -112,11 +112,11 @@ DebugReportFn(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType
     char buf[512];
     snprintf(buf,sizeof(buf),"[%s] Code %d : %s\n", pLayerPrefix, msgCode, pMsg);
     switch(msgFlags){
-        case VK_DEBUG_REPORT_INFORMATION_BIT_EXT          : _LOGI("%s", buf);  return false;  // 1
-        case VK_DEBUG_REPORT_WARNING_BIT_EXT              : _LOGW("%s", buf);  return false;  // 2
-        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT  : _LOGV("%s", buf);  return false;  // 4
-        case VK_DEBUG_REPORT_ERROR_BIT_EXT                : _LOGE("%s", buf);  return true;   // 8 Bail out for errors
-        case VK_DEBUG_REPORT_DEBUG_BIT_EXT                : _LOGD("%s", buf);  return false;  //16
+        case VK_DEBUG_REPORT_INFORMATION_BIT_EXT          : _LOGI("%s", buf);   return false;  // 1
+        case VK_DEBUG_REPORT_WARNING_BIT_EXT              : _LOGW("%s", buf);   return false;  // 2
+        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT  : _LOGV("%s", buf);   return false;  // 4
+        case VK_DEBUG_REPORT_ERROR_BIT_EXT                : _LOGE("%s\n", buf); return true;   // 8 Bail out for errors
+        case VK_DEBUG_REPORT_DEBUG_BIT_EXT                : _LOGD("%s", buf);   return false;  //16
         default : return false; //Don't bail out.
     }
 }
@@ -124,7 +124,7 @@ DebugReportFn(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType
 
 //----------------------------------------CDebugReport----------------------------------------
 
-void CDebugReport::Init(VkInstance inst){
+void CDebugReport::Init(VkInstance inst) {
     assert(!!inst);
     vkCreateDebugReportCallbackEXT  = (PFN_vkCreateDebugReportCallbackEXT)  vkGetInstanceProcAddr(inst, "vkCreateDebugReportCallbackEXT" );
     vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(inst, "vkDestroyDebugReportCallbackEXT");

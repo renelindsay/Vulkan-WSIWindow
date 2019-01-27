@@ -413,6 +413,8 @@ static void demo_set_image_layout(struct demo *demo, VkImage image,
     image_memory_barrier.pNext = NULL;
     image_memory_barrier.srcAccessMask = srcAccessMask;
     image_memory_barrier.dstAccessMask = 0;
+    image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     image_memory_barrier.oldLayout = old_image_layout;
     image_memory_barrier.newLayout = new_image_layout;
     image_memory_barrier.image = image;
@@ -453,11 +455,9 @@ static void demo_set_image_layout(struct demo *demo, VkImage image,
         break;
     }
 
-
     VkImageMemoryBarrier *pmemory_barrier = &image_memory_barrier;
 
-    vkCmdPipelineBarrier(demo->cmd, src_stages, dest_stages, 0, 0, NULL, 0,
-                         NULL, 1, pmemory_barrier);
+    vkCmdPipelineBarrier(demo->cmd, src_stages, dest_stages, 0, 0, NULL, 0, NULL, 1, pmemory_barrier);
 }
 
 static void demo_draw_build_cmd(struct demo *demo, VkCommandBuffer cmd_buf) {
@@ -532,7 +532,7 @@ static void demo_draw_build_cmd(struct demo *demo, VkCommandBuffer cmd_buf) {
         image_ownership_barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
         vkCmdPipelineBarrier(cmd_buf,
-                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                              VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0,
                              0, NULL, 0, NULL, 1, &image_ownership_barrier);
     }
@@ -565,8 +565,8 @@ void demo_build_image_ownership_cmd(struct demo *demo, int i) {
     image_ownership_barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
     vkCmdPipelineBarrier(demo->swapchain_image_resources[i].graphics_to_present_cmd,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0,
+                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0,
                          NULL, 0, NULL, 1, &image_ownership_barrier);
     err = vkEndCommandBuffer(demo->swapchain_image_resources[i].graphics_to_present_cmd);
     assert(!err);
@@ -1096,7 +1096,7 @@ static void demo_prepare_texture_image(struct demo *demo, const char *filename,
         vkUnmapMemory(demo->device, tex_obj->mem);
     }
 
-    tex_obj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    tex_obj->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 }
 
 static void demo_destroy_texture_image(struct demo *demo,
@@ -1129,7 +1129,7 @@ static void demo_prepare_textures(struct demo *demo) {
             // shader to run until layout transition completes
             demo_set_image_layout(demo, demo->textures[i].image, VK_IMAGE_ASPECT_COLOR_BIT,
                                   VK_IMAGE_LAYOUT_PREINITIALIZED, demo->textures[i].imageLayout,
-                                  VK_ACCESS_HOST_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                  (VkAccessFlagBits)0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                                   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
             demo->staging_texture.image = 0;
         } else if (props.optimalTilingFeatures &

@@ -117,7 +117,7 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
 }
 
 std::vector<char> CTriangle::ReadFile(const std::string& filename) {
-    FILE* file = fopen(filename.c_str(), "r");  assert(!!file);
+    FILE* file = fopen(filename.c_str(), "rb");  assert(!!file);
     fseek(file, 0L, SEEK_END);
     size_t file_size = (size_t) ftell(file);
     std::vector<char> buffer(file_size);
