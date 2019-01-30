@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
     //triangle.CreateRenderPass(swapchain.info.imageFormat);
     triangle.renderpass = swapchain.renderpass;
     triangle.CreateGraphicsPipeline(swapchain.GetExtent());
+    printf("Pipeline created\n");
 
     swapchain.SetImageCount(3);
     //swapchain.SetRenderPass(triangle.renderpass);

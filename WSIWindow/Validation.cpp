@@ -108,9 +108,10 @@ void ShowVkResult(VkResult err) {}
 VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugReportFn(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
         size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData) {
-    if(objType == VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_EXT && msgCode == 1) return false;
+    if(objType == VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_EXT && msgCode <= 1) return false;
     char buf[512];
-    snprintf(buf,sizeof(buf),"[%s] Code %d : %s\n", pLayerPrefix, msgCode, pMsg);
+    //snprintf(buf,sizeof(buf),"[%s] Code %d : %s\n", pLayerPrefix, msgCode, pMsg);
+    snprintf(buf, sizeof(buf), "[%s] : %s\n", pLayerPrefix, pMsg);  // msgCode is now always 0
     switch(msgFlags){
         case VK_DEBUG_REPORT_INFORMATION_BIT_EXT          : _LOGI("%s", buf);   return false;  // 1
         case VK_DEBUG_REPORT_WARNING_BIT_EXT              : _LOGW("%s", buf);   return false;  // 2

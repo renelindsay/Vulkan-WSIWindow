@@ -12,7 +12,7 @@
 *  Use SetFormat() to change the color format, or just leave it on the default setting.
 *
 *  Use Swapchain.renderpass to add Color and depth attachments, and configure
-*  and add subpasses and dependencies between suppasses.
+*  and add subpasses and dependencies between subpasses.
 *  eg.
 *    swapchain.renderpass.AddColorAttachment();  // Add a color attachment. (optionally you may specify the VkFormat)
      swapchain.renderpass.AddDepthAttachment();  // Add a depth-stencil attachment. ()
@@ -36,12 +36,14 @@
 #ifndef CSWAPCHAIN_H
 #define CSWAPCHAIN_H
 
+#include "WSIWindow.h"
 #include "CDevices.h"
 #include "CRenderpass.h"
 
-#define IS_ANDROID false // PC: default to low-latency (no fps limit)
 #ifdef ANDROID
 #define IS_ANDROID true  // ANDROID: default to power-save (limit to 60fps)
+#else
+#define IS_ANDROID false // PC: default to low-latency (no fps limit)
 #endif
 
 struct CSwapchainBuffer {

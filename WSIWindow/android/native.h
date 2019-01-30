@@ -4,6 +4,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <android/log.h>
 #include <android_native_app_glue.h>
 #include <vulkan_wrapper.h>                      // Builds dispatch table for Vulkan functions

@@ -1,5 +1,8 @@
 // From: http://www.50ply.com/blog/2013/01/19/loading-compressed-android-assets-with-file-pointer/
 
+//#define _GNU_SOURCE
+#define _BSD_SOURCE 1
+
 #include <stdio.h>
 
 #include "android_fopen.h"
@@ -24,7 +27,7 @@ static int android_close(void* cookie) {
 }
 
 // must be established by someone else...
-AAssetManager* android_asset_manager;
+static AAssetManager* android_asset_manager = NULL;
 void android_fopen_set_asset_manager(AAssetManager* manager) {
   android_asset_manager = manager;
 }
@@ -37,4 +40,3 @@ FILE* android_fopen(const char* fname, const char* mode) {
 
   return funopen(asset, android_read, android_write, android_seek, android_close);
 }
-

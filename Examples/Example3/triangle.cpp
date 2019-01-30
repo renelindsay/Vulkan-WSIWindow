@@ -1,4 +1,5 @@
 #include "triangle.h"
+#include "WSIWindow.h"
 
 CTriangle::CTriangle() : device(), vertShaderModule(), fragShaderModule(),
                          pipelineLayout(0), graphicsPipeline() {}
@@ -117,9 +118,16 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
 }
 
 std::vector<char> CTriangle::ReadFile(const std::string& filename) {
-    FILE* file = fopen(filename.c_str(), "rb");  assert(!!file);
+    printf("Read file: %s... ", filename.c_str());
+    FILE* file = fopen(filename.c_str(), "rb");  //assert(!!file && "File not found");
+    printf("%s\n", (file?"Found":"Not found"));
+    assert(!!file && "File not found");
+
     fseek(file, 0L, SEEK_END);
+
     size_t file_size = (size_t) ftell(file);
+    printf("size = %d\n", (uint32_t)file_size);
+
     std::vector<char> buffer(file_size);
     rewind(file);
     fread(buffer.data(), 1, file_size, file);

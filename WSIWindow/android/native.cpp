@@ -107,7 +107,7 @@ int main(int argc, char *argv[]);          // Forward declaration of main functi
 
 void android_main(struct android_app* state) {
     printf("Native Activity\n");
-    app_dummy();                           // Make sure glue isn't stripped
+    // app_dummy();                           // Make sure glue isn't stripped
     // state->onAppCmd     = handle_cmd;      // Register window event callback  (Temporary)
     // state->onInputEvent = handle_input;    // Register input event callback   (Temporary)
     Android_App = state;                     // Pass android app state to window_andoid.cpp
