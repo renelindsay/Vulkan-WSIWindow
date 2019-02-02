@@ -84,7 +84,7 @@ void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes
 
 // ----------------------------------Renderpass---------------------------------
 //CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
-CRenderpass::CRenderpass() : device(), renderpass(), active(false) {}
+CRenderpass::CRenderpass() : device(), renderpass() {}
 CRenderpass::~CRenderpass() {Destroy();}
 
 void CRenderpass::Init(VkDevice device, VkFormat surface_format, VkFormat depth_format){
@@ -124,10 +124,10 @@ void CRenderpass::AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass)
     dependencies.push_back(dependency);
 }
 
-void CRenderpass::Create(VkDevice device){
-    if(active) return;
-    this->device = device;
+void CRenderpass::Create() {
     //Destroy();
+    if(renderpass) return;
+
     // Build subpass array
     std::vector<VkSubpassDescription> subs(subpasses.size());
     repeat(subpasses.size()) subs[i] = subpasses[i];
@@ -144,20 +144,14 @@ void CRenderpass::Create(VkDevice device){
     rp_info.pDependencies   = dependencies.data();
     VKERRCHECK(vkCreateRenderPass(device, &rp_info, nullptr, &renderpass));
     LOGI("Renderpass created\n");
-    active = true;
 }
 
 void CRenderpass::Destroy(){
-    if(!active) return;
+    if(!renderpass) return;
     vkDestroyRenderPass(device, renderpass, nullptr);
     renderpass = 0;
-    active = false;
     LOGI("Renderpass destroyed\n");
 }
-
-
-
-
 
 
 

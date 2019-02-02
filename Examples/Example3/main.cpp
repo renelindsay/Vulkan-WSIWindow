@@ -33,9 +33,8 @@
 //-- EVENT HANDLERS --
 class CWindow : public WSIWindow {
   public:
-    CSwapchain* pSwapchain;
     void OnResizeEvent(uint16_t width, uint16_t height) {
-        pSwapchain->SetExtent(width, height);
+        //printf("OnResizeEvent: %d x %d\n", width, height);
     }
 };
 
@@ -57,7 +56,6 @@ int main(int argc, char *argv[]) {
     CDevice device(*gpu);                                             // Create Logical device on selected gpu
     CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
     CSwapchain swapchain(*queue);
-    Window.pSwapchain = &swapchain;
 
     swapchain.renderpass.AddColorAttachment();
     //swapchain.renderpass.AddDepthAttachment();

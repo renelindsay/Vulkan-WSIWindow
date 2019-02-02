@@ -131,7 +131,6 @@ CInstance::CInstance(const bool enable_validation, const char* app_name, const c
                      "VK_LAYER_LUNARG_parameter_validation",
                      "VK_LAYER_LUNARG_object_tracker",
                      "VK_LAYER_LUNARG_core_validation",
-                     "VK_LAYER_LUNARG_swapchain",
                      "VK_LAYER_GOOGLE_unique_objects"});
     }
     // clang-format on

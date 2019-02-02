@@ -10,8 +10,8 @@ class CTriangle {
     VkShaderModule   vertShaderModule;
     VkShaderModule   fragShaderModule;
 
-    static std::vector<char> ReadFile(const std::string& filename);
-    void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
+    VkShaderModule LoadShader(const char* filename);
+    VkShaderModule CreateShaderModule(const std::vector<char>& code);
   public:
     VkDevice     device;
     VkRenderPass renderpass;

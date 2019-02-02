@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "triangle.h"
 #include "WSIWindow.h"
 
@@ -13,11 +14,8 @@ CTriangle::~CTriangle(){
 }
 
 void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
-    auto vertShaderCode = ReadFile("shaders/vert.spv");
-    auto fragShaderCode = ReadFile("shaders/frag.spv");
-
-    CreateShaderModule(vertShaderCode, vertShaderModule);
-    CreateShaderModule(fragShaderCode, fragShaderModule);
+    vertShaderModule = LoadShader("shaders/vert.spv");
+    fragShaderModule = LoadShader("shaders/frag.spv");
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -117,34 +115,35 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
     VKERRCHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 }
 
-std::vector<char> CTriangle::ReadFile(const std::string& filename) {
-    printf("Read file: %s... ", filename.c_str());
-    FILE* file = fopen(filename.c_str(), "rb");  //assert(!!file && "File not found");
+VkShaderModule CTriangle::LoadShader(const char* filename) {
+    // Read File
+    printf("Load Shader: %s... ", filename);
+    FILE* file = fopen(filename, "rb");
     printf("%s\n", (file?"Found":"Not found"));
     assert(!!file && "File not found");
 
     fseek(file, 0L, SEEK_END);
-
     size_t file_size = (size_t) ftell(file);
-    printf("size = %d\n", (uint32_t)file_size);
-
     std::vector<char> buffer(file_size);
     rewind(file);
     fread(buffer.data(), 1, file_size, file);
     fclose(file);
-    return buffer;
+
+    return CreateShaderModule(buffer); 
 }
 
-void CTriangle::CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule) {
+VkShaderModule CTriangle::CreateShaderModule(const std::vector<char>& code) {
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
 
     std::vector<uint32_t> codeAligned(code.size() / 4 + 1);
     memcpy(codeAligned.data(), code.data(), code.size());
-
     createInfo.pCode = codeAligned.data();
+
+    VkShaderModule shaderModule = 0;
     VKERRCHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
+    return shaderModule;
 }
 
 void CTriangle::RecordCommandBuffer(CSwapchainBuffer& swapchain_buffer) {

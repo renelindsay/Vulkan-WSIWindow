@@ -68,7 +68,7 @@ struct CQueue{
     VkQueue         handle;
     uint            family;   // queue family
     uint            index;    // queue index
-    VkQueueFlags    flags;
+    VkQueueFlags    flags;    // Graphics / Compute / Transfer / Sparse / Protected
     VkSurfaceKHR    surface;  // 0 if queue can not present
     VkDevice        device;   // (used by CSwapchain)
     CPhysicalDevice gpu;      // (used by CSwapchain)

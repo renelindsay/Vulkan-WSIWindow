@@ -22,7 +22,7 @@
 //  +------------------+--+ |              |
 //                     V m  |              |
 //                     |    |              |
-//                     |    | 1            | 1
+//                     | 1  | 1            | 1
 //                   +------+--------------+--+
 //                   | VkRenderPassCreateInfo |
 //                   +------------------------+
@@ -62,17 +62,16 @@ class CRenderpass{
         operator VkSubpassDescription();
         CSubpass(CRenderpass& renderpass);
       public:
-        void UseAttachment(uint32_t attachment_index);
+        void UseAttachment(uint32_t attachment_index);  // for write
         void UseAttachments(vector<uint32_t> attachment_indexes = {});
-        void InputAttachment(uint32_t attachment_index);
+        void InputAttachment(uint32_t attachment_index);  //for read
         void InputAttachments(vector<uint32_t> attachment_indexes = {});
     };
+
     VkDevice     device;
     VkFormat     surface_format;
     VkFormat     depth_format;
-
     VkRenderPass renderpass;
-    bool         active;
 
   public:
     std::vector<CSubpass>                subpasses;
@@ -88,10 +87,11 @@ class CRenderpass{
     CSubpass& AddSubpass(vector<uint32_t> attachment_indexes = {});
     void AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass);
 
-    void Create(VkDevice device);
+    //void Create(VkDevice device);
+    void Create();
     void Destroy();
     operator VkRenderPass () const {
-        ASSERT(active, "Swapchain.renderpass was not initialized. Call: CSwapchain.Apply(); before use.\n");
+        ASSERT(!!renderpass, "Swapchain.renderpass was not initialized. Call: CSwapchain.Apply(); before use.\n");
         return renderpass;
     }
 };

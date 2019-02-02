@@ -45,7 +45,8 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     //--- surface caps ---
     VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
     assert(surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    assert(surface_caps.supportedTransforms & surface_caps.currentTransform);
+    //assert(surface_caps.supportedTransforms & surface_caps.currentTransform);
+    assert(surface_caps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR);
     assert(surface_caps.supportedCompositeAlpha & (VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR | VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR));
     //--------------------
 
@@ -59,14 +60,14 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     info.imageArrayLayers      = 1;  // 2 for stereo
     info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-    info.preTransform          = surface_caps.currentTransform;  //VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ?
+    info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
     //info.compositeAlpha        = composite_alpha;
     info.presentMode           = VK_PRESENT_MODE_FIFO_KHR;
     info.clipped               = true;
     //info.oldSwapchain          = swapchain;
     info.compositeAlpha = (surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ?
                            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    SetExtent(64, 64);  // also initializes surface_caps
+    SetExtent();  // also initializes surface_caps
     SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
     SetImageCount(2);
     renderpass.Init(device, info.imageFormat, GetSupportedDepthFormat(gpu));
@@ -85,16 +86,21 @@ void CSwapchain::CreateCommandPool(uint32_t family) {
 
 int clamp(int val, int min, int max){ return (val < min ? min : val > max ? max : val); }
 
-void CSwapchain::SetExtent(uint32_t width, uint32_t height){
+//void CSwapchain::SetExtent(uint32_t width, uint32_t height) { //provide width,height, in case its not available from surface
+void CSwapchain::SetExtent() {
     VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
     VkExtent2D& curr = surface_caps.currentExtent;
     VkExtent2D& ext = info.imageExtent;
 
     //printf("swapchain: w=%d h=%d curr_w=%d curr_h=%d\n", width, height, curr.width, curr.height);
-    if (curr.width == 0xFFFFFFFF == curr.height){
-        ext.width  = clamp(width,  surface_caps.minImageExtent.width,  surface_caps.maxImageExtent.width);
-        ext.height = clamp(height, surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
-    } else ext = curr;
+
+    if (curr.width == 0xFFFFFFFF) {  // 0xFFFFFFFF indicates surface size is set from extent
+        const int default_width  = 256;
+        const int default_height = 256;
+        LOGW("Can't determine current window surface extent from surface caps. Using defaults instead. (%d x %d)\n", default_width, default_height);
+        ext.width  = clamp(default_width,  surface_caps.minImageExtent.width,  surface_caps.maxImageExtent.width);
+        ext.height = clamp(default_height, surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
+    } else ext = curr;              // else, set extent from surface size
     if (!!swapchain) Apply();
 }
 
@@ -118,6 +124,7 @@ bool CSwapchain::SetImageCount(uint32_t image_count){  // set number of framebuf
     uint32_t count = max(image_count, surface_caps.minImageCount);                      //clamp to min limit
     if(surface_caps.maxImageCount > 0) count = min(count, surface_caps.maxImageCount);  //clamp to max limit
     info.minImageCount = count;
+    if(count != image_count) LOGW("Swapchain using %d framebuffers, instead of %d.\n", count, image_count);
     if(!!swapchain) Apply();
     return (count == image_count);
 }
@@ -186,7 +193,7 @@ void CSwapchain::Print(){
 //}
 
 void CSwapchain::Apply(){
-    renderpass.Create(device);
+    renderpass.Create();
 
     //assert(!!renderpass && "RendePass was not set.");
     info.oldSwapchain = swapchain;
@@ -204,11 +211,13 @@ void CSwapchain::Apply(){
     }
     //--------------------------
 
+    //-- Allocate array of images for swapchain--
     std::vector<VkImage> images;
     uint32_t count = 0;
     VKERRCHECK(vkGetSwapchainImagesKHR(device, swapchain, &count, nullptr));
     images.resize(count);
     VKERRCHECK(vkGetSwapchainImagesKHR(device, swapchain, &count, images.data()));
+    //-------------------------------------------
 
     buffers.resize(count);
     repeat(count){
@@ -255,16 +264,20 @@ void CSwapchain::Apply(){
         createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(device, &createInfo, nullptr, &buf.fence);
         //-----------
+
+        //printf("---Extent = %d x %d\n", info.imageExtent.width, info.imageExtent.height);
     }
     if (!info.oldSwapchain) LOGI("Swapchain created\n");
 }
 //---------------------------------------------------------------------------------
 
-CSwapchainBuffer& CSwapchain::AcquireNext(){
+CSwapchainBuffer& CSwapchain::AcquireNext() {
     ASSERT(!is_acquired, "CSwapchain: Previous swapchain buffer has not yet been presented.\n");
     //ASSERT(!!renderpass, "CSwapchain: renderpass was not set.\n");
-    while(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, &acquired_index) == VK_ERROR_OUT_OF_DATE_KHR)
-        Apply();  // for Intel GPU
+
+    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, &acquired_index);
+    if(result == VK_ERROR_OUT_OF_DATE_KHR) SetExtent();  // window resize
+
     CSwapchainBuffer& buf = buffers[acquired_index];
     buf.extent = info.imageExtent;
     vkWaitForFences(device, 1, &buf.fence, VK_TRUE, UINT64_MAX);
@@ -291,11 +304,16 @@ void CSwapchain::Present() {
     // --- Present ---
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores    = &submit_semaphore;
     presentInfo.swapchainCount     = 1;
     presentInfo.pSwapchains        = &swapchain;
     presentInfo.pImageIndices      = &acquired_index;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores    = &submit_semaphore;
-    VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
+    //VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
+
+    VkResult result = vkQueuePresentKHR(queue, &presentInfo);
+    if(result == VK_ERROR_OUT_OF_DATE_KHR) SetExtent();  // window resize
+    else ShowVkResult(result);
+
     is_acquired = false;
 }

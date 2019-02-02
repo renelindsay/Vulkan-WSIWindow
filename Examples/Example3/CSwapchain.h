@@ -21,7 +21,6 @@
 *
 *  Use the PresentMode() function to select vsync behaviour (FIFO / MAILBOX / ...)
 *  Use the SetImageCount() to select double or tripple buffering. (default is 2: double-buffering)
-*  Call the SetExtent() function to adjust framebuffer dimentions, if the window gets resized.
 *
 *  PRESENTING:
 *  Call AcquireNext() to get the next CSwapchainBuffer struct.
@@ -74,6 +73,7 @@ class CSwapchain {
     void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
     void CreateCommandPool(uint32_t family);
     void CreateCommandBuffers();
+    void SetExtent();  //resize FrameBuffer image to match window surface
 
 public:
     VkSurfaceCapabilitiesKHR surface_caps;
@@ -87,12 +87,12 @@ public:
     bool PresentMode(VkPresentModeKHR preferred_mode);               // If mode is not available, returns false and uses FIFO.
 
     void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
-    void SetExtent(uint32_t width, uint32_t height);
+    //void SetExtent(uint32_t width=64, uint32_t height=64);
     bool SetImageCount(uint32_t image_count = 2);                    // 2=doublebuffer 3=tripplebuffer
     //void SetRenderPass(VkRenderPass renderpass);
 
     VkExtent2D GetExtent(){return info.imageExtent;}
-    void Print();    
+    void Print();
     void Apply();
 
     CSwapchainBuffer& AcquireNext();
