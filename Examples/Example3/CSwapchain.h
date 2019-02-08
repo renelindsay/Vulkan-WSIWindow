@@ -72,15 +72,17 @@ class CSwapchain {
 
     void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
     void CreateCommandPool(uint32_t family);
-    void CreateCommandBuffers();
+    //void CreateCommandBuffers();
     void SetExtent();  //resize FrameBuffer image to match window surface
-
+    void Apply();
 public:
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainCreateInfoKHR info;
-    CRenderpass renderpass;
+    //CRenderpass renderpass;
+    CRenderpass* prenderpass;
 
-    CSwapchain(const CQueue& present_queue);
+    CSwapchain(const CQueue& present_queue, CRenderpass& renderpass);
+    //CSwapchain(const CQueue& present_queue);
     ~CSwapchain();
 
     bool PresentMode(bool no_tearing, bool powersave = IS_ANDROID);  // ANDROID: default to power-save mode (limit to 60fps)
@@ -93,7 +95,6 @@ public:
 
     VkExtent2D GetExtent(){return info.imageExtent;}
     void Print();
-    void Apply();
 
     CSwapchainBuffer& AcquireNext();
     void Present();

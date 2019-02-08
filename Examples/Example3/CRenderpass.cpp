@@ -4,7 +4,8 @@
 #include <array>
 
 // Returns best available depth-stencil format which supports optimal tiling, or 0 if none found.
-VkFormat GetSupportedDepthFormat(VkPhysicalDevice physicalDevice) {
+VkFormat GetSupportedDepthFormat(VkPhysicalDevice gpu, std::vector<VkFormat> preferred_formats) {
+
     std::array<VkFormat, 5> depthFormats = {
         VK_FORMAT_D32_SFLOAT_S8_UINT,
         VK_FORMAT_D32_SFLOAT,
@@ -13,9 +14,11 @@ VkFormat GetSupportedDepthFormat(VkPhysicalDevice physicalDevice) {
         VK_FORMAT_D16_UNORM
     };
 
-    for (auto& format : depthFormats) {
+    for(auto& df : depthFormats) preferred_formats.push_back(df);
+
+    for (auto& format : preferred_formats) {
         VkFormatProperties formatProps;
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProps);
+        vkGetPhysicalDeviceFormatProperties(gpu, format, &formatProps);
         if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
             return format;
         }
@@ -23,7 +26,26 @@ VkFormat GetSupportedDepthFormat(VkPhysicalDevice physicalDevice) {
     return VK_FORMAT_UNDEFINED; // 0
 }
 
-// ----------------------------------Subpass------------------------------------
+//--Returns the best supported surface format, prefering ones in the preferred_formats list. 
+VkFormat GetSupportedColorFormat(VkPhysicalDevice gpu, VkSurfaceKHR surface, std::vector<VkFormat> preferred_formats) {
+    //---Get Surface format list---
+    std::vector<VkSurfaceFormatKHR> formats;
+    uint32_t count = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &count, nullptr);
+    formats.resize(count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &count, formats.data());
+    //-----------------------------
+
+    ASSERT(!!count, "No supported surface formats found.");
+    for (auto& pf : preferred_formats) 
+        for (auto& f : formats) 
+            if(f.format == pf) return f.format;
+    return formats[0].format;
+}
+
+
+
+// -----------------------------------Subpass------------------------------------
 
 VkAttachmentDescription Attachment(VkFormat format, VkImageLayout finalLayout){
     VkAttachmentDescription attachment = {};
@@ -81,27 +103,30 @@ void CRenderpass::CSubpass::InputAttachment(uint32_t attachment_index){
 void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes){
     for(auto i : attachment_indexes) InputAttachment(i);
 }
+// -----------------------------------------------------------------------------
+
 
 // ----------------------------------Renderpass---------------------------------
-//CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
-CRenderpass::CRenderpass() : device(), renderpass() {}
+CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
 CRenderpass::~CRenderpass() {Destroy();}
 
+/*
 void CRenderpass::Init(VkDevice device, VkFormat surface_format, VkFormat depth_format){
   this->device = device;
   this->surface_format = surface_format;
   this->depth_format = depth_format;
 }
+*/
 
-
-uint32_t CRenderpass::AddColorAttachment(VkFormat format){
-    if(format == VK_FORMAT_UNDEFINED) format = surface_format;
-    attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+uint32_t CRenderpass::AddColorAttachment(VkFormat format, VkImageLayout final_layout){
+    //if(format == VK_FORMAT_UNDEFINED) format = surface_format;
+    if (final_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) surface_format = format;
+    attachments.push_back(Attachment(format, final_layout));
     return (uint32_t)attachments.size()-1;
 }
 
 uint32_t CRenderpass::AddDepthAttachment(VkFormat format){
-    if(format == VK_FORMAT_UNDEFINED) format = depth_format;
+    //if(format == VK_FORMAT_UNDEFINED) format = depth_format;
     attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
     return (uint32_t)attachments.size()-1;
 }
@@ -137,11 +162,11 @@ void CRenderpass::Create() {
     rp_info.pNext = NULL;
     rp_info.flags = 0;
     rp_info.attachmentCount = (uint32_t)attachments.size();
-    rp_info.pAttachments    = attachments.data();
+    rp_info.pAttachments    =           attachments.data();
     rp_info.subpassCount    = (uint32_t)subs.size();
-    rp_info.pSubpasses      = subs.data();
+    rp_info.pSubpasses      =           subs.data();
     rp_info.dependencyCount = (uint32_t)dependencies.size();
-    rp_info.pDependencies   = dependencies.data();
+    rp_info.pDependencies   =           dependencies.data();
     VKERRCHECK(vkCreateRenderPass(device, &rp_info, nullptr, &renderpass));
     LOGI("Renderpass created\n");
 }

@@ -55,24 +55,30 @@ int main(int argc, char *argv[]) {
 
     CDevice device(*gpu);                                             // Create Logical device on selected gpu
     CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
-    CSwapchain swapchain(*queue);
 
-    swapchain.renderpass.AddColorAttachment();
-    //swapchain.renderpass.AddDepthAttachment();
-    swapchain.renderpass.AddSubpass({0});
-    swapchain.Apply();
+    //--- Renderpass ---
+    VkFormat color_fmt = GetSupportedColorFormat(*gpu, surface);
+    VkFormat depth_fmt = GetSupportedDepthFormat(*gpu);
+    CRenderpass renderpass(device);
+    renderpass.AddColorAttachment(color_fmt);
+    //renderpass.AddDepthAttachment(depth_fmt);
+    renderpass.AddSubpass({0});
+    //-------------------
 
+    //--- Swapchain ---
+    CSwapchain swapchain(*queue, renderpass);
+    swapchain.SetImageCount(3);
+    swapchain.Print();
+    //-----------------
+
+    //--- Pipeline ---
     CTriangle triangle;
     triangle.device = device;
-    //triangle.CreateRenderPass(swapchain.info.imageFormat);
-    triangle.renderpass = swapchain.renderpass;
+    triangle.renderpass = renderpass;
     triangle.CreateGraphicsPipeline(swapchain.GetExtent());
     printf("Pipeline created\n");
+    //----------------
 
-    swapchain.SetImageCount(3);
-    //swapchain.SetRenderPass(triangle.renderpass);
-    swapchain.Print();
-//return 0;
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
         CSwapchainBuffer& buffer = swapchain.AcquireNext();
         triangle.RecordCommandBuffer(buffer);

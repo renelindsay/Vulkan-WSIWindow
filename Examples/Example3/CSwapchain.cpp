@@ -2,6 +2,25 @@
 
 #include "CSwapchain.h"
 
+CSwapchain::CSwapchain(const CQueue& present_queue, CRenderpass& renderpass) {
+    const CQueue& q = present_queue;
+    prenderpass = &renderpass;
+    if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
+    Init(q.gpu, q.device, q.surface);
+    queue = q.handle;
+    CreateCommandPool(q.family);
+
+    // -- Create Semaphores --
+    VkSemaphoreCreateInfo semaphoreInfo = {};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &acquire_semaphore));
+    VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &submit_semaphore));
+    // -----------------------
+    Apply();
+}
+
+/*
+// old
 CSwapchain::CSwapchain(const CQueue& present_queue){
     const CQueue& q = present_queue;
     if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
@@ -16,6 +35,7 @@ CSwapchain::CSwapchain(const CQueue& present_queue){
     VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &submit_semaphore));
     // -----------------------
 }
+*/
 
 CSwapchain::~CSwapchain(){
     if (device) vkDeviceWaitIdle(device);
@@ -34,7 +54,7 @@ CSwapchain::~CSwapchain(){
     }
 }
 
-void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface){
+void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface) {
     this->gpu     = gpu;
     this->surface = surface;
     this->device  = device;
@@ -56,6 +76,10 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     //info.minImageCount         = 2; // double-buffer
     //info.imageFormat           = format.format;
     //info.imageColorSpace       = format.colorSpace;
+
+    info.imageFormat           = prenderpass->surface_format;
+    info.imageColorSpace       = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+
     //info.imageExtent           = {64, 64}; //extent;
     info.imageArrayLayers      = 1;  // 2 for stereo
     info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -70,7 +94,8 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     SetExtent();  // also initializes surface_caps
     SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
     SetImageCount(2);
-    renderpass.Init(device, info.imageFormat, GetSupportedDepthFormat(gpu));
+    
+    //renderpass.Init(device, info.imageFormat, GetSupportedDepthFormat(gpu));
     //Apply();
 }
 
@@ -172,7 +197,7 @@ const char* FormatStr(VkFormat fmt) {
 #undef STR
 }
 
-void CSwapchain::Print(){
+void CSwapchain::Print() {
     printf("Swapchain:\n");
     printf("\tFormat  = %d : %s\n", info.imageFormat, FormatStr(info.imageFormat));
     VkExtent2D& extent = info.imageExtent;
@@ -192,8 +217,8 @@ void CSwapchain::Print(){
 //    Apply();
 //}
 
-void CSwapchain::Apply(){
-    renderpass.Create();
+void CSwapchain::Apply() {
+    //renderpass.Create();
 
     //assert(!!renderpass && "RendePass was not set.");
     info.oldSwapchain = swapchain;
@@ -242,12 +267,12 @@ void CSwapchain::Apply(){
         //--Framebuffer--
         VkFramebufferCreateInfo fbCreateInfo = {};
         fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fbCreateInfo.renderPass      = *prenderpass;
         fbCreateInfo.attachmentCount = 1;
-        fbCreateInfo.pAttachments = &buf.view;
+        fbCreateInfo.pAttachments    = &buf.view;
         fbCreateInfo.width  = info.imageExtent.width;
         fbCreateInfo.height = info.imageExtent.height;
         fbCreateInfo.layers = 1;
-        fbCreateInfo.renderPass = renderpass;
         VKERRCHECK(vkCreateFramebuffer(device, &fbCreateInfo, NULL, &buf.framebuffer));
         //---------------
         //--CommandBuffer--
