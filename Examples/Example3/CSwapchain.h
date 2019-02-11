@@ -38,6 +38,7 @@
 #include "WSIWindow.h"
 #include "CDevices.h"
 #include "CRenderpass.h"
+#include "Buffers.h"
 
 #ifdef ANDROID
 #define IS_ANDROID true  // ANDROID: default to power-save (limit to 60fps)
@@ -47,7 +48,7 @@
 
 struct CSwapchainBuffer {
   VkImage         image;
-  VkImageView     view;
+  VkImageView     view;  // TODO: MRT?
   VkExtent2D      extent;
   VkFramebuffer   framebuffer;
   VkCommandBuffer command_buffer;
@@ -63,6 +64,7 @@ class CSwapchain {
     //VkRenderPass       renderpass;
     VkCommandPool      command_pool;
 
+    CDepthBuffer depth_buffer;
     std::vector<CSwapchainBuffer> buffers;
     uint32_t acquired_index;  // index of last acquired image
     bool is_acquired;
@@ -72,17 +74,14 @@ class CSwapchain {
 
     void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
     void CreateCommandPool(uint32_t family);
-    //void CreateCommandBuffers();
     void SetExtent();  //resize FrameBuffer image to match window surface
     void Apply();
 public:
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainCreateInfoKHR info;
-    //CRenderpass renderpass;
     CRenderpass* prenderpass;
 
     CSwapchain(const CQueue& present_queue, CRenderpass& renderpass);
-    //CSwapchain(const CQueue& present_queue);
     ~CSwapchain();
 
     bool PresentMode(bool no_tearing, bool powersave = IS_ANDROID);  // ANDROID: default to power-save mode (limit to 60fps)
@@ -91,7 +90,6 @@ public:
     void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
     //void SetExtent(uint32_t width=64, uint32_t height=64);
     bool SetImageCount(uint32_t image_count = 2);                    // 2=doublebuffer 3=tripplebuffer
-    //void SetRenderPass(VkRenderPass renderpass);
 
     VkExtent2D GetExtent(){return info.imageExtent;}
     void Print();

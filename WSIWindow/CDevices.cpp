@@ -23,7 +23,39 @@ int CPhysicalDevice::FindQueueFamily(VkQueueFlags flags, VkSurfaceKHR surface){
     }
     return -1;
 }
+
+std::vector<VkSurfaceFormatKHR> CPhysicalDevice::SurfaceFormats(VkSurfaceKHR surface) {  // Get Surface format list
+    std::vector<VkSurfaceFormatKHR> formats;
+    uint32_t count = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface, &count, nullptr);
+    formats.resize(count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(handle, surface, &count, formats.data());
+    ASSERT(!!count, "No supported surface formats found.");
+    return formats;
+}
+
+//--Returns the first supported surface color format from the preferred_formats list, or VK_FORMAT_UNDEFINED if no match found.
+VkFormat CPhysicalDevice::FindSurfaceFormat(VkSurfaceKHR surface, std::vector<VkFormat> preferred_formats) {
+    auto formats = SurfaceFormats(surface);  // get list of supported surface formats
+    for (auto& pf : preferred_formats) 
+        for (auto& f : formats) 
+            if(f.format == pf) return f.format;
+    //return formats[0].format;  //first supported format
+    return VK_FORMAT_UNDEFINED;
+}
+
+VkFormat CPhysicalDevice::FindDepthFormat(std::vector<VkFormat> preferred_formats) {
+    for (auto& format : preferred_formats) {
+        VkFormatProperties formatProps;
+        vkGetPhysicalDeviceFormatProperties(handle, format, &formatProps);
+        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+            return format;
+        }
+    }
+    return VK_FORMAT_UNDEFINED; // 0
+}
 //----------------------------------------------------------------
+
 //------------------------CPhysicalDevices------------------------
 CPhysicalDevices::CPhysicalDevices(const VkInstance instance) {
     VkResult result;

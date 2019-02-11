@@ -16,26 +16,10 @@ CSwapchain::CSwapchain(const CQueue& present_queue, CRenderpass& renderpass) {
     VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &acquire_semaphore));
     VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &submit_semaphore));
     // -----------------------
+
+    depth_buffer.Create(gpu, device, info.imageExtent, prenderpass->depth_format);
     Apply();
 }
-
-/*
-// old
-CSwapchain::CSwapchain(const CQueue& present_queue){
-    const CQueue& q = present_queue;
-    if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
-    Init(q.gpu, q.device, q.surface);
-    queue = q.handle;
-    CreateCommandPool(q.family);
-
-    // -- Create Semaphores --
-    VkSemaphoreCreateInfo semaphoreInfo = {};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &acquire_semaphore));
-    VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &submit_semaphore));
-    // -----------------------
-}
-*/
 
 CSwapchain::~CSwapchain(){
     if (device) vkDeviceWaitIdle(device);
@@ -187,11 +171,19 @@ bool CSwapchain::PresentMode(VkPresentModeKHR pref_mode){
 const char* FormatStr(VkFormat fmt) {
 #define STR(f) case f: return #f
     switch (fmt) {
-        STR(VK_FORMAT_R5G6B5_UNORM_PACK16);  // 4
+        STR(VK_FORMAT_UNDEFINED);            //  0
+        //Color
+        STR(VK_FORMAT_R5G6B5_UNORM_PACK16);  //  4
         STR(VK_FORMAT_R8G8B8A8_UNORM);       // 37
         STR(VK_FORMAT_R8G8B8A8_SRGB);        // 43
         STR(VK_FORMAT_B8G8R8A8_UNORM);       // 44
         STR(VK_FORMAT_B8G8R8A8_SRGB);        // 50
+        //Depth
+        STR(VK_FORMAT_D32_SFLOAT);           //126
+        STR(VK_FORMAT_D32_SFLOAT_S8_UINT);   //130
+        STR(VK_FORMAT_D24_UNORM_S8_UINT);    //129
+        STR(VK_FORMAT_D16_UNORM_S8_UINT);    //128
+        STR(VK_FORMAT_D16_UNORM);            //124
         default: return "";
     }
 #undef STR
@@ -199,7 +191,9 @@ const char* FormatStr(VkFormat fmt) {
 
 void CSwapchain::Print() {
     printf("Swapchain:\n");
-    printf("\tFormat  = %d : %s\n", info.imageFormat, FormatStr(info.imageFormat));
+    printf("\tFormat  = %3d : %s\n", info.imageFormat,    FormatStr(info.imageFormat));
+    printf("\tDepth   = %3d : %s\n", depth_buffer.format, FormatStr(depth_buffer.format));
+
     VkExtent2D& extent = info.imageExtent;
     printf("\tExtent  = %d x %d\n", extent.width, extent.height);
     printf("\tBuffers = %d\n", (int)buffers.size());
@@ -212,15 +206,7 @@ void CSwapchain::Print() {
     for (auto m : modes) print((m == mode) ? eRESET : eFAINT, "\t\t%s %s\n", (m == mode) ? cTICK : " ",mode_names[m]);
 }
 
-//void CSwapchain::SetRenderPass(VkRenderPass renderpass){
-//    this->renderpass = renderpass;
-//    Apply();
-//}
-
 void CSwapchain::Apply() {
-    //renderpass.Create();
-
-    //assert(!!renderpass && "RendePass was not set.");
     info.oldSwapchain = swapchain;
     VKERRCHECK(vkCreateSwapchainKHR(device, &info, nullptr, &swapchain));
 
@@ -244,6 +230,8 @@ void CSwapchain::Apply() {
     VKERRCHECK(vkGetSwapchainImagesKHR(device, swapchain, &count, images.data()));
     //-------------------------------------------
 
+    depth_buffer.Resize(info.imageExtent);  //resize depth buffer
+
     buffers.resize(count);
     repeat(count){
         auto& buf = buffers[i];
@@ -264,12 +252,18 @@ void CSwapchain::Apply() {
         ivCreateInfo.subresourceRange.layerCount     = 1;
         VKERRCHECK(vkCreateImageView(device, &ivCreateInfo, nullptr, &buf.view));
         //---------------
+
+        // -- View list --
+        std::vector<VkImageView> views;                                       // List of views
+        views.push_back(buf.view);                                            // Add color buffer (unique)
+        if(depth_buffer.ImageView) views.push_back(depth_buffer.ImageView);   // Add depth buffer (shared)
+
         //--Framebuffer--
         VkFramebufferCreateInfo fbCreateInfo = {};
         fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         fbCreateInfo.renderPass      = *prenderpass;
-        fbCreateInfo.attachmentCount = 1;
-        fbCreateInfo.pAttachments    = &buf.view;
+        fbCreateInfo.attachmentCount = (uint32_t)views.size();  // 1/2
+        fbCreateInfo.pAttachments    =           views.data();  // views for color and depth buffer
         fbCreateInfo.width  = info.imageExtent.width;
         fbCreateInfo.height = info.imageExtent.height;
         fbCreateInfo.layers = 1;

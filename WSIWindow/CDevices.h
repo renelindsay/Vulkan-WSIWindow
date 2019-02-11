@@ -12,12 +12,17 @@
 *     └CQueueFamily[]             (array)
 *
 *  WARNING: This unit is a work in progress.
-*  Interfaces are highly experimental and very likely to change.
+*  Interfaces are experimental and likely to change.
 *
 * CPhysicalDevices:
 * -----------------
 * Create an instance of CPhysicalDevices, to enumerate the available GPUs, and their properties.
-* Use the FindPresentable() function to find which CPU can present to a given window surface.
+* Use the FindPresentable() function to find which GPU can present to the given window surface.
+
+* CPhysicalDevice:
+* ----------------
+* Use FindSurfaceFormat() function to find a supported color format for the given window surface.
+* Use FindDepthFormat() function to find a supported depth format.
 *
 * CDevice:
 * --------
@@ -49,6 +54,17 @@ class CPhysicalDevice {
 
     operator VkPhysicalDevice() const { return handle; }
     int FindQueueFamily(VkQueueFlags flags, VkSurfaceKHR surface = 0);  // Returns a QueueFamlyIndex, or -1 if none found.
+
+    std::vector<VkSurfaceFormatKHR> SurfaceFormats(VkSurfaceKHR surface);     // Returns list of supported surface formats.
+    VkFormat FindSurfaceFormat(VkSurfaceKHR surface,                          // Returns first supported format from given list,
+        std::vector<VkFormat> preferred_formats = {VK_FORMAT_B8G8R8A8_UNORM,  // or VK_FORMAT_UNDEFINED if no match was found.
+                                                   VK_FORMAT_R8G8B8A8_UNORM});
+    VkFormat FindDepthFormat(
+        std::vector<VkFormat> preferred_formats = {VK_FORMAT_D32_SFLOAT,          // Returns first supported depth format from list,
+                                                   VK_FORMAT_D32_SFLOAT_S8_UINT,  // or VK_FORMAT_UNDEFINED if no match was found.
+                                                   VK_FORMAT_D24_UNORM_S8_UINT,
+                                                   VK_FORMAT_D16_UNORM_S8_UINT,
+                                                   VK_FORMAT_D16_UNORM});
 };
 //----------------------------------------------------------------
 //------------------------CPhysicalDevices------------------------

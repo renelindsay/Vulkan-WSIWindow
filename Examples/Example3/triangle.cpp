@@ -162,9 +162,10 @@ void CTriangle::RecordCommandBuffer(CSwapchainBuffer& swapchain_buffer) {
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapchain_buffer.extent;
 
-    VkClearValue clearColor = {0.0f, 0.0f, 0.2f, 1.0f};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    VkClearValue clearVals[2] = {};
+    clearVals[0] = {0.0f, 0.0f, 0.2f, 1.0f};
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearVals;
 
     vkCmdBeginRenderPass(command_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);

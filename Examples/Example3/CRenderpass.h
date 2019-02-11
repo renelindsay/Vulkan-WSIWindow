@@ -52,17 +52,6 @@
 
 #include "WSIWindow.h"
 
-VkFormat GetSupportedDepthFormat(VkPhysicalDevice gpu,
-    std::vector<VkFormat> preferred_formats = {VK_FORMAT_D32_SFLOAT_S8_UINT, 
-                                               VK_FORMAT_D32_SFLOAT,
-                                               VK_FORMAT_D24_UNORM_S8_UINT,
-                                               VK_FORMAT_D16_UNORM_S8_UINT,
-                                               VK_FORMAT_D16_UNORM});
-
-VkFormat GetSupportedColorFormat(VkPhysicalDevice gpu, VkSurfaceKHR surface, 
-    std::vector<VkFormat> preferred_formats = {VK_FORMAT_B8G8R8A8_UNORM, 
-                                               VK_FORMAT_R8G8B8A8_UNORM});
-
 class CRenderpass {
     class CSubpass {
         friend class CRenderpass;
@@ -85,7 +74,7 @@ class CRenderpass {
 
   public:
     VkFormat     surface_format = VK_FORMAT_UNDEFINED;
-    //VkFormat     depth_format;
+    VkFormat     depth_format   = VK_FORMAT_UNDEFINED;
 
     std::vector<CSubpass>                subpasses;
     std::vector<VkAttachmentDescription> attachments;

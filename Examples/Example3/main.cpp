@@ -57,11 +57,11 @@ int main(int argc, char *argv[]) {
     CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
 
     //--- Renderpass ---
-    VkFormat color_fmt = GetSupportedColorFormat(*gpu, surface);
-    VkFormat depth_fmt = GetSupportedDepthFormat(*gpu);
+    VkFormat color_fmt = gpu->FindSurfaceFormat(surface);
+    VkFormat depth_fmt = gpu->FindDepthFormat();
     CRenderpass renderpass(device);
     renderpass.AddColorAttachment(color_fmt);
-    //renderpass.AddDepthAttachment(depth_fmt);
+    renderpass.AddDepthAttachment(depth_fmt);
     renderpass.AddSubpass({0});
     //-------------------
 

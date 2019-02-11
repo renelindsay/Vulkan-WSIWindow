@@ -74,12 +74,15 @@
 #ifdef _WIN32
     #include <Windows.h>
     #define cTICK "\xFB" /* On Windows, use Square-root as tick mark */
+    #define PAUSE system("pause")
 #elif __ANDROID__
     #include <native.h>
     #define cTICK "\u2713"
+    #define PAUSE
 #elif __LINUX__
     #include <xkbcommon/xkbcommon.h>
     #define cTICK "\u2713"
+    #define PAUSE
 #endif
 
 enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,     // normal colors
@@ -117,7 +120,7 @@ void color(eColor color);
     #define  LOGI(...) _LOGI(__VA_ARGS__)      /*  Prints INFO messages in green  */
     #define  LOGW(...) _LOGW(__VA_ARGS__)      /*  Prints WARNINGs in yellow      */
     #define  LOGE(...) _LOGE(__VA_ARGS__)      /*  Prints ERRORs in red           */
-    #define ASSERT(EXPRESSION, ...) { if(!EXPRESSION) { _LOGE(__VA_ARGS__); printf("%s:%d\n", __FILE__, __LINE__); exit(0); }  }
+    #define ASSERT(EXPRESSION, ...) { if(!EXPRESSION) { _LOGE(__VA_ARGS__); printf("%s:%d\n", __FILE__, __LINE__); PAUSE; exit(0); }  }
 #else
     #define  LOG(...)  {}
     #define  LOGV(...) {}

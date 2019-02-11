@@ -1,49 +1,6 @@
 // Copyright (C) 2017 by Rene Lindsay
 
 #include "CRenderpass.h"
-#include <array>
-
-// Returns best available depth-stencil format which supports optimal tiling, or 0 if none found.
-VkFormat GetSupportedDepthFormat(VkPhysicalDevice gpu, std::vector<VkFormat> preferred_formats) {
-
-    std::array<VkFormat, 5> depthFormats = {
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D32_SFLOAT,
-        VK_FORMAT_D24_UNORM_S8_UINT,
-        VK_FORMAT_D16_UNORM_S8_UINT,
-        VK_FORMAT_D16_UNORM
-    };
-
-    for(auto& df : depthFormats) preferred_formats.push_back(df);
-
-    for (auto& format : preferred_formats) {
-        VkFormatProperties formatProps;
-        vkGetPhysicalDeviceFormatProperties(gpu, format, &formatProps);
-        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-            return format;
-        }
-    }
-    return VK_FORMAT_UNDEFINED; // 0
-}
-
-//--Returns the best supported surface format, prefering ones in the preferred_formats list. 
-VkFormat GetSupportedColorFormat(VkPhysicalDevice gpu, VkSurfaceKHR surface, std::vector<VkFormat> preferred_formats) {
-    //---Get Surface format list---
-    std::vector<VkSurfaceFormatKHR> formats;
-    uint32_t count = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &count, nullptr);
-    formats.resize(count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &count, formats.data());
-    //-----------------------------
-
-    ASSERT(!!count, "No supported surface formats found.");
-    for (auto& pf : preferred_formats) 
-        for (auto& f : formats) 
-            if(f.format == pf) return f.format;
-    return formats[0].format;
-}
-
-
 
 // -----------------------------------Subpass------------------------------------
 
@@ -127,6 +84,7 @@ uint32_t CRenderpass::AddColorAttachment(VkFormat format, VkImageLayout final_la
 
 uint32_t CRenderpass::AddDepthAttachment(VkFormat format){
     //if(format == VK_FORMAT_UNDEFINED) format = depth_format;
+    depth_format = format;
     attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
     return (uint32_t)attachments.size()-1;
 }
