@@ -1,3 +1,10 @@
+// * Copyright (C) 2019 by Rene Lindsay
+
+/*
+*  CSwapchain uses this class to allocate a depth buffer for the swapchain framebuffer.
+*  CSwapchain will automatically resize the depth buffer if the window gets resized.
+*/
+
 #ifndef BUFFERS_H
 #define BUFFERS_H
 

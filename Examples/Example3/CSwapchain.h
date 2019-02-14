@@ -1,36 +1,24 @@
 /*
-// Copyright (C) 2017 by Rene Lindsay
+// Copyright (C) 2019 by Rene Lindsay
 *
 *  This unit wraps the swapchain.
 *
 *  WARNING: This unit is a work in progress.
-*  Interfaces are experimental and very likely to change.
+*  Interfaces are experimental and likely to change.
 *
-*  The CSwapchain constructor requires a CQueue object as parameter,
-*  which must be a presentable queue, linked to the window surface.
-*
-*  Use SetFormat() to change the color format, or just leave it on the default setting.
-*
-*  Use Swapchain.renderpass to add Color and depth attachments, and configure
-*  and add subpasses and dependencies between subpasses.
-*  eg.
-*    swapchain.renderpass.AddColorAttachment();  // Add a color attachment. (optionally you may specify the VkFormat)
-     swapchain.renderpass.AddDepthAttachment();  // Add a depth-stencil attachment. ()
-     swapchain.renderpass.AddSubpass({0,1});     // Create one subpass, which uses attachments 1 and 2.
-     swapchain.Apply();                          // Create these settings. (Do not make further changes to renderpass after this call.)
+*  The CSwapchain constructor requires a CQueue and CRenderpass as parameters, so create these first.
+*  The CQueue must be presentable, and linked to the window surface.
+*  The CRenderpass requires at least one color attachment, and optionally a depth attachment.
 *
 *  Use the PresentMode() function to select vsync behaviour (FIFO / MAILBOX / ...)
 *  Use the SetImageCount() to select double or tripple buffering. (default is 2: double-buffering)
 *
 *  PRESENTING:
-*  Call AcquireNext() to get the next CSwapchainBuffer struct.
-*  Record commands into its command_buffer member variable,
-*  and call Present() when done.
-*
+*  Call BeginFrame() to acquire the next frame's command buffer.
+*  Record vkCmd* commands, using the returned command buffer.
+*  Call EndFrame() to execure and Present image, when done.
 *
 */
-
-
 
 #ifndef CSWAPCHAIN_H
 #define CSWAPCHAIN_H
@@ -47,22 +35,28 @@
 #endif
 
 struct CSwapchainBuffer {
-  VkImage         image;
-  VkImageView     view;  // TODO: MRT?
-  VkExtent2D      extent;
-  VkFramebuffer   framebuffer;
-  VkCommandBuffer command_buffer;
-  VkFence         fence;
+    VkImage         image;
+    VkImageView     view;  // TODO: MRT?
+    VkExtent2D      extent;
+    VkFramebuffer   framebuffer;
+    VkCommandBuffer command_buffer;
+    VkFence         fence;
 };
-
+/*
+struct CCmd : public CSwapchainBuffer {
+    void BindPipeline(VkPipeline graphicsPipeline);
+    void Draw(uint32_t vertexCount, uint32_t instanceCount=1, uint32_t firstVertex=0, uint32_t  firstInstance=0);
+};
+*/
 class CSwapchain {
     VkPhysicalDevice   gpu;
     VkDevice           device;
     VkQueue            queue;
     VkSurfaceKHR       surface;
     VkSwapchainKHR     swapchain;
-    //VkRenderPass       renderpass;
     VkCommandPool      command_pool;
+    //VkRenderPass       renderpass;
+    CRenderpass*       renderpass;
 
     CDepthBuffer depth_buffer;
     std::vector<CSwapchainBuffer> buffers;
@@ -75,27 +69,26 @@ class CSwapchain {
     void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
     void CreateCommandPool(uint32_t family);
     void SetExtent();  //resize FrameBuffer image to match window surface
+    //void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
     void Apply();
+    CSwapchainBuffer& AcquireNext();
+    void Present();
 public:
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainCreateInfoKHR info;
-    CRenderpass* prenderpass;
 
     CSwapchain(const CQueue& present_queue, CRenderpass& renderpass);
     ~CSwapchain();
 
     bool PresentMode(bool no_tearing, bool powersave = IS_ANDROID);  // ANDROID: default to power-save mode (limit to 60fps)
     bool PresentMode(VkPresentModeKHR preferred_mode);               // If mode is not available, returns false and uses FIFO.
-
-    void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
-    //void SetExtent(uint32_t width=64, uint32_t height=64);
     bool SetImageCount(uint32_t image_count = 2);                    // 2=doublebuffer 3=tripplebuffer
 
     VkExtent2D GetExtent(){return info.imageExtent;}
     void Print();
 
-    CSwapchainBuffer& AcquireNext();
-    void Present();
+    VkCommandBuffer BeginFrame();  // Get next cmd buffer and start recording commands
+    void EndFrame();               // End the renderpass and present
 };
 
 #endif

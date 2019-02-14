@@ -4,7 +4,7 @@
 
 // -----------------------------------Subpass------------------------------------
 
-VkAttachmentDescription Attachment(VkFormat format, VkImageLayout finalLayout){
+VkAttachmentDescription Attachment(VkFormat format, VkImageLayout finalLayout) {
     VkAttachmentDescription attachment = {};
     attachment.format         = format;
     attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -19,7 +19,7 @@ VkAttachmentDescription Attachment(VkFormat format, VkImageLayout finalLayout){
 
 CRenderpass::CSubpass::CSubpass(CRenderpass& renderpass):renderpass(renderpass), pdepth_ref(){}
 
-CRenderpass::CSubpass::operator VkSubpassDescription(){
+CRenderpass::CSubpass::operator VkSubpassDescription() {
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.inputAttachmentCount    = (uint32_t)input_refs.size();
@@ -33,7 +33,7 @@ CRenderpass::CSubpass::operator VkSubpassDescription(){
     return subpass;
 }
 
-void CRenderpass::CSubpass::UseAttachment(uint32_t attachment_index){
+void CRenderpass::CSubpass::UseAttachment(uint32_t attachment_index) {
     if(renderpass.attachments.at(attachment_index).finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL){  // depth-stencil attachment
         depth_ref.attachment = attachment_index;
         depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -46,18 +46,18 @@ void CRenderpass::CSubpass::UseAttachment(uint32_t attachment_index){
     }
 }
 
-void CRenderpass::CSubpass::UseAttachments(vector<uint32_t> attachment_indexes){
+void CRenderpass::CSubpass::UseAttachments(vector<uint32_t> attachment_indexes) {
     for(auto i : attachment_indexes) UseAttachment(i);
 }
 
-void CRenderpass::CSubpass::InputAttachment(uint32_t attachment_index){
+void CRenderpass::CSubpass::InputAttachment(uint32_t attachment_index) {
     VkAttachmentReference ref = {};
     ref.attachment = attachment_index;
     ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     input_refs.push_back(ref);
 }
 
-void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes){
+void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes) {
     for(auto i : attachment_indexes) InputAttachment(i);
 }
 // -----------------------------------------------------------------------------
@@ -67,36 +67,34 @@ void CRenderpass::CSubpass::InputAttachments(vector<uint32_t> attachment_indexes
 CRenderpass::CRenderpass(VkDevice device) : device(device), renderpass() {}
 CRenderpass::~CRenderpass() {Destroy();}
 
-/*
-void CRenderpass::Init(VkDevice device, VkFormat surface_format, VkFormat depth_format){
-  this->device = device;
-  this->surface_format = surface_format;
-  this->depth_format = depth_format;
-}
-*/
+uint32_t CRenderpass::AddColorAttachment(VkFormat format, VkClearColorValue clearVal, VkImageLayout final_layout) {
+    clearValues.push_back({});
+    clearValues.back().color = clearVal;
 
-uint32_t CRenderpass::AddColorAttachment(VkFormat format, VkImageLayout final_layout){
-    //if(format == VK_FORMAT_UNDEFINED) format = surface_format;
     if (final_layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) surface_format = format;
     attachments.push_back(Attachment(format, final_layout));
     return (uint32_t)attachments.size()-1;
 }
 
-uint32_t CRenderpass::AddDepthAttachment(VkFormat format){
-    //if(format == VK_FORMAT_UNDEFINED) format = depth_format;
+uint32_t CRenderpass::AddDepthAttachment(VkFormat format, VkClearDepthStencilValue clearVal) {
+    ASSERT(depth_format == VK_FORMAT_UNDEFINED, "Renderpass can't have more than one depth buffer. ");
     depth_format = format;
+
+    clearValues.push_back({});
+    clearValues.back().depthStencil = clearVal;
+
     attachments.push_back(Attachment(format, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
     return (uint32_t)attachments.size()-1;
 }
 
-CRenderpass::CSubpass& CRenderpass::AddSubpass(vector<uint32_t> attachment_indexes){
+CRenderpass::CSubpass& CRenderpass::AddSubpass(vector<uint32_t> attachment_indexes) {
     subpasses.push_back(CSubpass(*this));
     CSubpass& subpass = subpasses.back();
     for(uint32_t i : attachment_indexes) subpass.UseAttachment(i);
     return subpass;
 }
 
-void CRenderpass::AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass){
+void CRenderpass::AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass) {
     VkSubpassDependency dependency = {};
     dependency.srcSubpass = srcSubpass; //VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = dstSubpass;
@@ -108,7 +106,7 @@ void CRenderpass::AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass)
 }
 
 void CRenderpass::Create() {
-    //Destroy();
+    ASSERT(!renderpass, "Renderpass cannot be modified after its been linked to swapchain or pipeline.\n");
     if(renderpass) return;
 
     // Build subpass array
@@ -129,7 +127,7 @@ void CRenderpass::Create() {
     LOGI("Renderpass created\n");
 }
 
-void CRenderpass::Destroy(){
+void CRenderpass::Destroy() {
     if(!renderpass) return;
     vkDestroyRenderPass(device, renderpass, nullptr);
     renderpass = 0;

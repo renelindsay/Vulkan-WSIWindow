@@ -1,4 +1,4 @@
-// * Copyright (C) 2017 by Rene Lindsay
+// * Copyright (C) 2019 by Rene Lindsay
 //
 //      -- Renderpasss structure --
 //
@@ -40,6 +40,7 @@
 //    renderpass.AddSubpass({0,1});                                // Create subpass, and link to attachment 0 and 1. (color and depth)
 //    renderpass.Create();                                         // Create the VkRenderPass instance. (optional)
 //
+//    NOTE: Get supported formats from CPhysicalDevice, rather than hard-coding them.
 //    WARNING: Don't make changes to renderpass after passing it to CSwapchain or CPipeline
 //
 // TODO:
@@ -73,8 +74,11 @@ class CRenderpass {
     VkRenderPass renderpass;
 
   public:
-    VkFormat     surface_format = VK_FORMAT_UNDEFINED;
-    VkFormat     depth_format   = VK_FORMAT_UNDEFINED;
+    // ---Used by CSwapchain ---
+    VkFormat surface_format = VK_FORMAT_UNDEFINED;
+    VkFormat depth_format   = VK_FORMAT_UNDEFINED;
+    std::vector<VkClearValue> clearValues;
+    //--------------------------
 
     std::vector<CSubpass>                subpasses;
     std::vector<VkAttachmentDescription> attachments;
@@ -82,10 +86,9 @@ class CRenderpass {
 
     CRenderpass(VkDevice device);
     ~CRenderpass();
-    //void Init(VkDevice device, VkFormat surface_format, VkFormat depth_format);
 
-    uint32_t AddColorAttachment(VkFormat format = VK_FORMAT_UNDEFINED, VkImageLayout final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-    uint32_t AddDepthAttachment(VkFormat format = VK_FORMAT_UNDEFINED);
+    uint32_t AddColorAttachment(VkFormat format, VkClearColorValue clearVal = {}, VkImageLayout final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    uint32_t AddDepthAttachment(VkFormat format, VkClearDepthStencilValue clearVal = {1.f, 0});
     CSubpass& AddSubpass(vector<uint32_t> attachment_indexes = {});
     void AddSubpassDependency(uint32_t srcSubpass, uint32_t dstSubpass);
 
@@ -93,7 +96,6 @@ class CRenderpass {
     void Destroy();
     operator VkRenderPass () {
         if(!renderpass) Create();
-        //ASSERT(!!renderpass, "Swapchain.renderpass was not initialized. Call: CSwapchain.Apply(); before use.\n");
         return renderpass;
     }
 };

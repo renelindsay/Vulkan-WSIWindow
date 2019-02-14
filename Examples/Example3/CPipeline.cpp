@@ -1,11 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "triangle.h"
+#include "CPipeline.h"
 #include "WSIWindow.h"
 
-CTriangle::CTriangle() : device(), vertShaderModule(), fragShaderModule(),
-                         pipelineLayout(0), graphicsPipeline() {}
+CPipeline::CPipeline(VkDevice device, VkRenderPass renderpass) :
+    device(device), renderpass(renderpass), 
+    vertShaderModule(), fragShaderModule(),
+    pipelineLayout(), graphicsPipeline() {}
 
-CTriangle::~CTriangle(){
+CPipeline::~CPipeline(){
     if (device) vkDeviceWaitIdle(device);
     if (pipelineLayout)   vkDestroyPipelineLayout(device, pipelineLayout,   nullptr);
     if (graphicsPipeline) vkDestroyPipeline      (device, graphicsPipeline, nullptr);
@@ -13,9 +15,55 @@ CTriangle::~CTriangle(){
     if (fragShaderModule) vkDestroyShaderModule  (device, fragShaderModule, nullptr);
 }
 
-void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
-    vertShaderModule = LoadShader("shaders/vert.spv");
-    fragShaderModule = LoadShader("shaders/frag.spv");
+// -- Shader modules ---
+bool CPipeline::LoadVertShader(const char* filename) {
+    vertShaderModule = LoadShader(filename);
+    return !!vertShaderModule;
+}
+
+bool CPipeline::LoadFragShader(const char* filename) {
+    fragShaderModule = LoadShader(filename);
+    return !!fragShaderModule;
+}
+
+VkShaderModule CPipeline::LoadShader(const char* filename) {
+    // Read File
+    printf("Load Shader: %s... ", filename);
+    FILE* file = fopen(filename, "rb");
+    printf("%s\n", (file?"Found":"Not found"));
+    assert(!!file && "File not found");
+
+    fseek(file, 0L, SEEK_END);
+    size_t file_size = (size_t) ftell(file);
+    std::vector<char> buffer(file_size);
+    rewind(file);
+    fread(buffer.data(), 1, file_size, file);
+    fclose(file);
+
+    return CreateShaderModule(buffer); 
+}
+
+VkShaderModule CPipeline::CreateShaderModule(const std::vector<char>& code) {
+    VkShaderModuleCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+
+    std::vector<uint32_t> codeAligned(code.size() / 4 + 1);
+    memcpy(codeAligned.data(), code.data(), code.size());
+    createInfo.pCode = codeAligned.data();
+
+    VkShaderModule shaderModule = 0;
+    VKERRCHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
+    return shaderModule;
+}
+// ---------------------
+
+// --- Pipeline ---
+VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
+    //vertShaderModule = LoadShader("shaders/vert.spv");
+    //fragShaderModule = LoadShader("shaders/frag.spv");
+    ASSERT(!!vertShaderModule, "No Vertex Shader loaded. ");
+    ASSERT(!!fragShaderModule, "No Fragment Shader loaded. ");
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -75,6 +123,22 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+    depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencilState.depthTestEnable       = VK_TRUE;
+    depthStencilState.depthWriteEnable      = VK_TRUE;
+    depthStencilState.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depthStencilState.depthBoundsTestEnable = VK_FALSE;
+    depthStencilState.stencilTestEnable     = VK_FALSE;
+    //depthStencilState.front.failOp          = VK_STENCIL_OP_KEEP;
+    //depthStencilState.front.passOp          = VK_STENCIL_OP_KEEP;
+    //depthStencilState.front.compareOp       = VK_COMPARE_OP_ALWAYS;
+    //depthStencilState.back.failOp           = VK_STENCIL_OP_KEEP;
+    //depthStencilState.back.passOp           = VK_STENCIL_OP_KEEP;
+    //depthStencilState.back.compareOp        = VK_COMPARE_OP_ALWAYS;
+    //depthStencilState.minDepthBounds        = 0;
+    //depthStencilState.maxDepthBounds        = MAXFLOAT;
+
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
@@ -94,7 +158,6 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
-
     VKERRCHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {};
@@ -103,74 +166,19 @@ void CTriangle::CreateGraphicsPipeline(VkExtent2D extent) {
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
+    //pipelineInfo.pTessellationState = 0;
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = &depthStencilState;
     pipelineInfo.pColorBlendState = &colorBlending;
+    //pipelineInfo.pDynamicState = 0;
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.renderPass = renderpass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+    //pipelineInfo.basePipelineIndex = 0;
 
     VKERRCHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
-}
-
-VkShaderModule CTriangle::LoadShader(const char* filename) {
-    // Read File
-    printf("Load Shader: %s... ", filename);
-    FILE* file = fopen(filename, "rb");
-    printf("%s\n", (file?"Found":"Not found"));
-    assert(!!file && "File not found");
-
-    fseek(file, 0L, SEEK_END);
-    size_t file_size = (size_t) ftell(file);
-    std::vector<char> buffer(file_size);
-    rewind(file);
-    fread(buffer.data(), 1, file_size, file);
-    fclose(file);
-
-    return CreateShaderModule(buffer); 
-}
-
-VkShaderModule CTriangle::CreateShaderModule(const std::vector<char>& code) {
-    VkShaderModuleCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-
-    std::vector<uint32_t> codeAligned(code.size() / 4 + 1);
-    memcpy(codeAligned.data(), code.data(), code.size());
-    createInfo.pCode = codeAligned.data();
-
-    VkShaderModule shaderModule = 0;
-    VKERRCHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
-    return shaderModule;
-}
-
-void CTriangle::RecordCommandBuffer(CSwapchainBuffer& swapchain_buffer) {
-    VkCommandBuffer command_buffer = swapchain_buffer.command_buffer;
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-    vkBeginCommandBuffer(command_buffer, &beginInfo);
-
-    VkRenderPassBeginInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderpass;
-    renderPassInfo.framebuffer = swapchain_buffer.framebuffer;
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapchain_buffer.extent;
-
-    VkClearValue clearVals[2] = {};
-    clearVals[0] = {0.0f, 0.0f, 0.2f, 1.0f};
-    renderPassInfo.clearValueCount = 2;
-    renderPassInfo.pClearValues = clearVals;
-
-    vkCmdBeginRenderPass(command_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-        vkCmdDraw(command_buffer, 3, 1, 0, 0);
-    vkCmdEndRenderPass(command_buffer);
-
-    VKERRCHECK(vkEndCommandBuffer(command_buffer));
+    return graphicsPipeline;
 }

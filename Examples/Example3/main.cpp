@@ -1,6 +1,6 @@
 /*
 *--------------------------------------------------------------------------
-* Copyright (c) 2017 Rene Lindsay
+* Copyright (c) 2019 Rene Lindsay
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@
 *
 *--------------------------------------------------------------------------
 *
-* This sample project uses the CSwapchain class, to create a swapchain. (WIP)
+* This example project renders a triangle using 3 Vulkan wrapper classes:
+*   CRenderpass contains the subpasses and is used to set up the color and depth buffers.
+*   CPipeline loads the shaders and configures the graphics pipeline.
+*   CSwapchain manages the frame/command buffers and presents the result to the window surface.
 *
 */
 
 #include "WSIWindow.h"
 #include "CDevices.h"
-#include "CSwapchain.h"
-
 #include "CRenderpass.h"
-
-#include "triangle.h"
+#include "CSwapchain.h"
+#include "CPipeline.h"
 
 //-- EVENT HANDLERS --
 class CWindow : public WSIWindow {
@@ -60,29 +61,30 @@ int main(int argc, char *argv[]) {
     VkFormat color_fmt = gpu->FindSurfaceFormat(surface);
     VkFormat depth_fmt = gpu->FindDepthFormat();
     CRenderpass renderpass(device);
-    renderpass.AddColorAttachment(color_fmt);
+    renderpass.AddColorAttachment(color_fmt, {0.0f, 0.0f, 0.3f, 1.0f});  //color buffer, clear to blue
     renderpass.AddDepthAttachment(depth_fmt);
-    renderpass.AddSubpass({0});
+    renderpass.AddSubpass({0,1});
     //-------------------
 
     //--- Swapchain ---
     CSwapchain swapchain(*queue, renderpass);
-    swapchain.SetImageCount(3);
+    swapchain.SetImageCount(3);  // use tripple-buffering
     swapchain.Print();
     //-----------------
 
     //--- Pipeline ---
-    CTriangle triangle;
-    triangle.device = device;
-    triangle.renderpass = renderpass;
-    triangle.CreateGraphicsPipeline(swapchain.GetExtent());
+    CPipeline pipeline(device, renderpass);
+    pipeline.LoadVertShader("shaders/vert.spv");
+    pipeline.LoadFragShader("shaders/frag.spv");
+    pipeline.CreateGraphicsPipeline(swapchain.GetExtent());
     printf("Pipeline created\n");
     //----------------
 
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
-        CSwapchainBuffer& buffer = swapchain.AcquireNext();
-        triangle.RecordCommandBuffer(buffer);
-        swapchain.Present();
+        VkCommandBuffer cmd_buf = swapchain.BeginFrame();
+          vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+          vkCmdDraw(cmd_buf, 3, 1, 0, 0);
+        swapchain.EndFrame();
     }
 
     return 0;

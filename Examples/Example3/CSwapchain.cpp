@@ -1,10 +1,15 @@
 // * Copyright (C) 2017 by Rene Lindsay
 
 #include "CSwapchain.h"
-
+/*
+//---- Command Buffer (vkCmd*) ----
+void CCmd::BindPipeline(VkPipeline graphicsPipeline) { vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline); }
+void CCmd::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t  firstInstance) { vkCmdDraw(command_buffer,vertexCount, instanceCount, firstVertex, firstInstance); }
+//---------------------------------
+*/
 CSwapchain::CSwapchain(const CQueue& present_queue, CRenderpass& renderpass) {
     const CQueue& q = present_queue;
-    prenderpass = &renderpass;
+    this->renderpass = &renderpass;
     if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
     Init(q.gpu, q.device, q.surface);
     queue = q.handle;
@@ -17,7 +22,7 @@ CSwapchain::CSwapchain(const CQueue& present_queue, CRenderpass& renderpass) {
     VKERRCHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &submit_semaphore));
     // -----------------------
 
-    depth_buffer.Create(gpu, device, info.imageExtent, prenderpass->depth_format);
+    depth_buffer.Create(gpu, device, info.imageExtent, renderpass.depth_format);
     Apply();
 }
 
@@ -43,7 +48,6 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     this->surface = surface;
     this->device  = device;
     swapchain     = 0;
-    //renderpass    = 0;
     is_acquired   = false;
 
     //--- surface caps ---
@@ -58,10 +62,7 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     info.surface               = surface;
     //info.minImageCount         = 2; // double-buffer
-    //info.imageFormat           = format.format;
-    //info.imageColorSpace       = format.colorSpace;
-
-    info.imageFormat           = prenderpass->surface_format;
+    info.imageFormat           = renderpass->surface_format;
     info.imageColorSpace       = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 
     //info.imageExtent           = {64, 64}; //extent;
@@ -76,11 +77,8 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     info.compositeAlpha = (surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ?
                            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     SetExtent();  // also initializes surface_caps
-    SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
+    //SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
     SetImageCount(2);
-    
-    //renderpass.Init(device, info.imageFormat, GetSupportedDepthFormat(gpu));
-    //Apply();
 }
 
 //----------------------------------CommandPool------------------------------------
@@ -96,7 +94,7 @@ void CSwapchain::CreateCommandPool(uint32_t family) {
 int clamp(int val, int min, int max){ return (val < min ? min : val > max ? max : val); }
 
 //void CSwapchain::SetExtent(uint32_t width, uint32_t height) { //provide width,height, in case its not available from surface
-void CSwapchain::SetExtent() {
+void CSwapchain::SetExtent() {  // Fit image extent to window size
     VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
     VkExtent2D& curr = surface_caps.currentExtent;
     VkExtent2D& ext = info.imageExtent;
@@ -112,7 +110,7 @@ void CSwapchain::SetExtent() {
     } else ext = curr;              // else, set extent from surface size
     if (!!swapchain) Apply();
 }
-
+/*
 void CSwapchain::SetFormat(VkFormat preferred_format){  // if preferred is not available, default to first available format
     //---Get Surface format list---
     std::vector<VkSurfaceFormatKHR> formats;
@@ -128,7 +126,7 @@ void CSwapchain::SetFormat(VkFormat preferred_format){  // if preferred is not a
     if (format != preferred_format) LOGW("Surface format %d not available. Using format %d instead.\n", preferred_format, format);
     if (!!swapchain) Apply();
 }
-
+*/
 bool CSwapchain::SetImageCount(uint32_t image_count){  // set number of framebuffers. (2 or 3)
     uint32_t count = max(image_count, surface_caps.minImageCount);                      //clamp to min limit
     if(surface_caps.maxImageCount > 0) count = min(count, surface_caps.maxImageCount);  //clamp to max limit
@@ -261,7 +259,7 @@ void CSwapchain::Apply() {
         //--Framebuffer--
         VkFramebufferCreateInfo fbCreateInfo = {};
         fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        fbCreateInfo.renderPass      = *prenderpass;
+        fbCreateInfo.renderPass      = *renderpass;
         fbCreateInfo.attachmentCount = (uint32_t)views.size();  // 1/2
         fbCreateInfo.pAttachments    =           views.data();  // views for color and depth buffer
         fbCreateInfo.width  = info.imageExtent.width;
@@ -292,7 +290,6 @@ void CSwapchain::Apply() {
 
 CSwapchainBuffer& CSwapchain::AcquireNext() {
     ASSERT(!is_acquired, "CSwapchain: Previous swapchain buffer has not yet been presented.\n");
-    //ASSERT(!!renderpass, "CSwapchain: renderpass was not set.\n");
 
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, &acquired_index);
     if(result == VK_ERROR_OUT_OF_DATE_KHR) SetExtent();  // window resize
@@ -335,4 +332,34 @@ void CSwapchain::Present() {
     else ShowVkResult(result);
 
     is_acquired = false;
+}
+
+
+VkCommandBuffer CSwapchain::BeginFrame() {
+    auto& swapchain_buffer = AcquireNext();
+    auto& command_buffer = swapchain_buffer.command_buffer; 
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    VKERRCHECK(vkBeginCommandBuffer(command_buffer, &beginInfo));
+
+    VkRenderPassBeginInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *renderpass;
+    renderPassInfo.framebuffer = swapchain_buffer.framebuffer;
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = swapchain_buffer.extent;
+    renderPassInfo.clearValueCount = (uint32_t)renderpass->clearValues.size();
+    renderPassInfo.pClearValues    =           renderpass->clearValues.data();
+
+    vkCmdBeginRenderPass(command_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    return command_buffer;
+}
+
+
+void CSwapchain::EndFrame() {
+    auto& command_buffer = buffers[acquired_index].command_buffer;
+    vkCmdEndRenderPass(command_buffer);
+    VKERRCHECK(vkEndCommandBuffer(command_buffer));
+    Present();
 }
