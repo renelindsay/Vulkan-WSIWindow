@@ -51,7 +51,8 @@ struct CCmd : public CSwapchainBuffer {
 class CSwapchain {
     VkPhysicalDevice   gpu;
     VkDevice           device;
-    VkQueue            queue;
+    VkQueue            graphics_queue;
+    VkQueue            present_queue;
     VkSurfaceKHR       surface;
     VkSwapchainKHR     swapchain;
     VkCommandPool      command_pool;
@@ -66,7 +67,8 @@ class CSwapchain {
     VkSemaphore acquire_semaphore;
     VkSemaphore submit_semaphore;
 
-    void Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface);
+    void Init(const CQueue* present_queue, const CQueue* graphics_queue=0);
+
     void CreateCommandPool(uint32_t family);
     void SetExtent();  //resize FrameBuffer image to match window surface
     //void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
@@ -77,7 +79,7 @@ public:
     VkSurfaceCapabilitiesKHR surface_caps;
     VkSwapchainCreateInfoKHR info;
 
-    CSwapchain(const CQueue& present_queue, CRenderpass& renderpass);
+    CSwapchain(CRenderpass& renderpass, const CQueue* present_queue, const CQueue* graphics_queue);
     ~CSwapchain();
 
     bool PresentMode(bool no_tearing, bool powersave = IS_ANDROID);  // ANDROID: default to power-save mode (limit to 60fps)

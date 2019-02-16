@@ -54,8 +54,16 @@ int main(int argc, char *argv[]) {
     gpus.Print();        // List the available GPUs.
     if (!gpu) return 0;  // Exit if no devices can present to the given surface.
 
-    CDevice device(*gpu);                                             // Create Logical device on selected gpu
-    CQueue* queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create the present-queue
+    //--- Device and Queues ---
+    CDevice device(*gpu);                                               // Create Logical device on selected gpu
+
+    CQueue* p_queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT, surface);  // Create a graphics + present-queue
+    CQueue* g_queue = 0;
+    if(!p_queue) {                                                      // If failed, create separate queues
+        p_queue = device.AddQueue(0, surface);                          // Create present-queue
+        g_queue = device.AddQueue(VK_QUEUE_GRAPHICS_BIT);               // Create graphics queue
+    }
+    //-------------------------
 
     //--- Renderpass ---
     VkFormat color_fmt = gpu->FindSurfaceFormat(surface);
@@ -67,7 +75,7 @@ int main(int argc, char *argv[]) {
     //-------------------
 
     //--- Swapchain ---
-    CSwapchain swapchain(*queue, renderpass);
+    CSwapchain swapchain(renderpass, p_queue, g_queue);
     swapchain.SetImageCount(3);  // use tripple-buffering
     swapchain.Print();
     //-----------------

@@ -1,19 +1,13 @@
 // * Copyright (C) 2017 by Rene Lindsay
 
 #include "CSwapchain.h"
-/*
-//---- Command Buffer (vkCmd*) ----
-void CCmd::BindPipeline(VkPipeline graphicsPipeline) { vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline); }
-void CCmd::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t  firstInstance) { vkCmdDraw(command_buffer,vertexCount, instanceCount, firstVertex, firstInstance); }
-//---------------------------------
-*/
-CSwapchain::CSwapchain(const CQueue& present_queue, CRenderpass& renderpass) {
-    const CQueue& q = present_queue;
+
+CSwapchain::CSwapchain(CRenderpass& renderpass, const CQueue* present_queue, const CQueue* graphics_queue) {
     this->renderpass = &renderpass;
-    if(!q.surface){ LOGE("This queue may not be presentable. (No surface attached.)"); }
-    Init(q.gpu, q.device, q.surface);
-    queue = q.handle;
-    CreateCommandPool(q.family);
+    if(!graphics_queue) graphics_queue = present_queue;
+    Init(present_queue, graphics_queue);
+
+    CreateCommandPool(graphics_queue->family);
 
     // -- Create Semaphores --
     VkSemaphoreCreateInfo semaphoreInfo = {};
@@ -43,12 +37,14 @@ CSwapchain::~CSwapchain(){
     }
 }
 
-void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surface) {
-    this->gpu     = gpu;
-    this->surface = surface;
-    this->device  = device;
+void CSwapchain::Init(const CQueue* present_queue, const CQueue* graphics_queue) {
+    this->gpu     = present_queue->gpu;
+    this->surface = present_queue->surface;
+    this->device  = present_queue->device;
     swapchain     = 0;
     is_acquired   = false;
+    this->present_queue  = *present_queue;
+    this->graphics_queue = *graphics_queue;
 
     //--- surface caps ---
     VKERRCHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &surface_caps));
@@ -69,17 +65,27 @@ void CSwapchain::Init(VkPhysicalDevice gpu, VkDevice device, VkSurfaceKHR surfac
     info.imageArrayLayers      = 1;  // 2 for stereo
     info.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+    info.queueFamilyIndexCount = 0;
+    info.pQueueFamilyIndices   = 0;
     info.preTransform          = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
     //info.compositeAlpha        = composite_alpha;
     info.presentMode           = VK_PRESENT_MODE_FIFO_KHR;
     info.clipped               = true;
     //info.oldSwapchain          = swapchain;
+    
+    if(present_queue->family != graphics_queue->family) {
+        uint32_t families[2] = {present_queue->family, graphics_queue->family};
+        info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+        info.queueFamilyIndexCount = 2;
+        info.pQueueFamilyIndices   = families;
+    }
+    
     info.compositeAlpha = (surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) ?
                            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR : VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     SetExtent();  // also initializes surface_caps
-    //SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
     SetImageCount(2);
 }
+
 
 //----------------------------------CommandPool------------------------------------
 void CSwapchain::CreateCommandPool(uint32_t family) {
@@ -316,7 +322,7 @@ void CSwapchain::Present() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores    = &submit_semaphore;
     vkResetFences(device, 1, &buffer.fence);
-    VKERRCHECK(vkQueueSubmit(queue, 1, &submitInfo, buffer.fence));
+    VKERRCHECK(vkQueueSubmit(graphics_queue, 1, &submitInfo, buffer.fence));
     // --- Present ---
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -327,13 +333,13 @@ void CSwapchain::Present() {
     presentInfo.pImageIndices      = &acquired_index;
     //VKERRCHECK(vkQueuePresentKHR(queue, &presentInfo));
 
-    VkResult result = vkQueuePresentKHR(queue, &presentInfo);
+    VkResult result = vkQueuePresentKHR(present_queue, &presentInfo);
     if(result == VK_ERROR_OUT_OF_DATE_KHR) SetExtent();  // window resize
     else ShowVkResult(result);
 
     is_acquired = false;
 }
-
+//---------------------------------------------------------------------------------
 
 VkCommandBuffer CSwapchain::BeginFrame() {
     auto& swapchain_buffer = AcquireNext();

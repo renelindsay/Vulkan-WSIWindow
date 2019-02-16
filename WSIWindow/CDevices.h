@@ -80,7 +80,7 @@ class CPhysicalDevices {
 };
 //----------------------------------------------------------------
 //-----------------------------CQueue-----------------------------
-struct CQueue{
+struct CQueue {
     VkQueue         handle;
     uint            family;   // queue family
     uint            index;    // queue index
@@ -89,7 +89,10 @@ struct CQueue{
     VkDevice        device;   // (used by CSwapchain)
     CPhysicalDevice gpu;      // (used by CSwapchain)
 
-    operator VkQueue() const { return handle; }
+    operator VkQueue() const {
+        ASSERT(!!handle, "Queue not yet initialized. ");
+        return handle; 
+    }
 };
 //----------------------------------------------------------------
 //-----------------------------CDevice----------------------------
@@ -106,7 +109,12 @@ class CDevice {
     CDevice(CPhysicalDevice gpu);
     ~CDevice();
     CQueue* AddQueue(VkQueueFlags flags, VkSurfaceKHR surface = 0);  // returns 0 if failed
-    operator VkDevice() const { return handle; }
+    operator VkDevice() {
+        if(!handle) Create();
+        return handle; 
+    }
+
+
 };
 //----------------------------------------------------------------
 

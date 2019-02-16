@@ -122,6 +122,7 @@ void CPhysicalDevices::Print(bool show_queues) {
 
 //-----------------------------CDevice----------------------------
 CQueue* CDevice::AddQueue(VkQueueFlags flags, VkSurfaceKHR surface) {
+    ASSERT(!handle, "Can't add queues after device is already in use. ");
     uint f_inx = gpu.FindQueueFamily(flags, surface);                                        // Find correct queue family
     if (f_inx < 0) { LOGW("Could not create queue with requested properties."); return 0; }  // exit if not found
     uint max = gpu.queue_families[f_inx].queueCount;                                         // max number of queues
@@ -129,7 +130,7 @@ CQueue* CDevice::AddQueue(VkQueueFlags flags, VkSurfaceKHR surface) {
     if (q_inx == max) { LOGW("No more queues available from this family."); return 0; }      // exit if too many queues
     CQueue queue = {0, f_inx, q_inx, flags, surface, handle, gpu};                           // create queue
     queues.push_back(queue);                                                                 // add to queue list
-    Create();                                                                                // create logical device
+    //Create();                                                                                // create logical device
     LOGI("Queue: %d  flags: [ %s%s%s%s]%s\n", q_inx,
          (flags & 1) ? "GRAPHICS " : "", (flags & 2) ? "COMPUTE " : "",
          (flags & 4) ? "TRANSFER " : "", (flags & 8) ? "SPARSE "  : "",
@@ -186,6 +187,7 @@ void CDevice::Destroy(){
 
 CDevice::CDevice(CPhysicalDevice gpu) : handle() {
     this->gpu = gpu;
+    queues.reserve(16);
     LOGI("Logical Device using GPU: %s\n",gpu.properties.deviceName);
 #ifdef ENABLE_VALIDATION
     gpu.extensions.Print();
