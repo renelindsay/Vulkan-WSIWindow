@@ -167,8 +167,7 @@ CInstance::CInstance(const CLayers& layers, const CExtensions& extensions, const
 
 void CInstance::Create(const CLayers& layers, const CExtensions& extensions, const char* app_name, const char* engine_name) {
     // initialize the VkApplicationInfo structure
-    VkApplicationInfo app_info  = {};
-    app_info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    VkApplicationInfo app_info  = {VK_STRUCTURE_TYPE_APPLICATION_INFO};
     app_info.pNext              = NULL;
     app_info.pApplicationName   = app_name;
     app_info.applicationVersion = 1;
@@ -177,8 +176,7 @@ void CInstance::Create(const CLayers& layers, const CExtensions& extensions, con
     app_info.apiVersion         = VK_API_VERSION_1_0;
 
     // initialize the VkInstanceCreateInfo structure
-    VkInstanceCreateInfo inst_info    = {};
-    inst_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    VkInstanceCreateInfo inst_info    = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
     inst_info.pNext                   = NULL;
     inst_info.flags                   = 0;
     inst_info.pApplicationInfo        = &app_info;

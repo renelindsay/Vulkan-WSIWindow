@@ -1,13 +1,15 @@
 // * Copyright (C) 2017 by Rene Lindsay
 
 #include "CSwapchain.h"
+#include <algorithm>
 
 CSwapchain::CSwapchain(CRenderpass& renderpass, const CQueue* present_queue, const CQueue* graphics_queue) {
     this->renderpass = &renderpass;
     if(!graphics_queue) graphics_queue = present_queue;
     Init(present_queue, graphics_queue);
 
-    CreateCommandPool(graphics_queue->family);
+    //CreateCommandPool(graphics_queue->family);
+    command_pool = graphics_queue->CreateCommandPool();
 
     // -- Create Semaphores --
     VkSemaphoreCreateInfo semaphoreInfo = {};
@@ -54,8 +56,7 @@ void CSwapchain::Init(const CQueue* present_queue, const CQueue* graphics_queue)
     assert(surface_caps.supportedCompositeAlpha & (VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR | VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR));
     //--------------------
 
-    info = {};
-    info.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    info = {VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
     info.surface               = surface;
     //info.minImageCount         = 2; // double-buffer
     info.imageFormat           = renderpass->surface_format;
@@ -86,7 +87,7 @@ void CSwapchain::Init(const CQueue* present_queue, const CQueue* graphics_queue)
     SetImageCount(2);
 }
 
-
+/*
 //----------------------------------CommandPool------------------------------------
 void CSwapchain::CreateCommandPool(uint32_t family) {
     VkCommandPoolCreateInfo poolInfo = {};
@@ -96,6 +97,7 @@ void CSwapchain::CreateCommandPool(uint32_t family) {
     VKERRCHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &command_pool));
 }
 //---------------------------------------------------------------------------------
+*/
 
 int clamp(int val, int min, int max){ return (val < min ? min : val > max ? max : val); }
 
@@ -133,9 +135,10 @@ void CSwapchain::SetFormat(VkFormat preferred_format){  // if preferred is not a
     if (!!swapchain) Apply();
 }
 */
+
 bool CSwapchain::SetImageCount(uint32_t image_count){  // set number of framebuffers. (2 or 3)
-    uint32_t count = max(image_count, surface_caps.minImageCount);                      //clamp to min limit
-    if(surface_caps.maxImageCount > 0) count = min(count, surface_caps.maxImageCount);  //clamp to max limit
+    uint32_t count = std::max(image_count, surface_caps.minImageCount);                      //clamp to min limit
+    if(surface_caps.maxImageCount > 0) count = std::min(count, surface_caps.maxImageCount);  //clamp to max limit
     info.minImageCount = count;
     if(count != image_count) LOGW("Swapchain using %d framebuffers, instead of %d.\n", count, image_count);
     if(!!swapchain) Apply();
@@ -241,8 +244,7 @@ void CSwapchain::Apply() {
         auto& buf = buffers[i];
         buf.image = images[i];
         //---ImageView---
-        VkImageViewCreateInfo ivCreateInfo = {};
-        ivCreateInfo.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        VkImageViewCreateInfo ivCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
         ivCreateInfo.pNext    = NULL;
         ivCreateInfo.flags    = 0;
         ivCreateInfo.image    = images[i];
@@ -263,8 +265,7 @@ void CSwapchain::Apply() {
         if(depth_buffer.ImageView) views.push_back(depth_buffer.ImageView);   // Add depth buffer (shared)
 
         //--Framebuffer--
-        VkFramebufferCreateInfo fbCreateInfo = {};
-        fbCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        VkFramebufferCreateInfo fbCreateInfo = {VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
         fbCreateInfo.renderPass      = *renderpass;
         fbCreateInfo.attachmentCount = (uint32_t)views.size();  // 1/2
         fbCreateInfo.pAttachments    =           views.data();  // views for color and depth buffer
@@ -274,16 +275,14 @@ void CSwapchain::Apply() {
         VKERRCHECK(vkCreateFramebuffer(device, &fbCreateInfo, NULL, &buf.framebuffer));
         //---------------
         //--CommandBuffer--
-        VkCommandBufferAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        VkCommandBufferAllocateInfo allocInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
         allocInfo.commandPool = command_pool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = 1;
         VKERRCHECK(vkAllocateCommandBuffers(device, &allocInfo, &buf.command_buffer));
         //-----------------
         //---Fence---
-        VkFenceCreateInfo createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        VkFenceCreateInfo createInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
         createInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(device, &createInfo, nullptr, &buf.fence);
         //-----------
@@ -311,8 +310,7 @@ void CSwapchain::Present() {
     ASSERT(!!is_acquired, "CSwapchain: A buffer must be acquired before presenting.\n");
     // --- Submit ---
     CSwapchainBuffer& buffer = buffers[acquired_index];
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount   = 1;
     submitInfo.pWaitSemaphores      = &acquire_semaphore;
@@ -344,13 +342,11 @@ void CSwapchain::Present() {
 VkCommandBuffer CSwapchain::BeginFrame() {
     auto& swapchain_buffer = AcquireNext();
     auto& command_buffer = swapchain_buffer.command_buffer; 
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    VkCommandBufferBeginInfo beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     VKERRCHECK(vkBeginCommandBuffer(command_buffer, &beginInfo));
 
-    VkRenderPassBeginInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    VkRenderPassBeginInfo renderPassInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
     renderPassInfo.renderPass = *renderpass;
     renderPassInfo.framebuffer = swapchain_buffer.framebuffer;
     renderPassInfo.renderArea.offset = {0, 0};

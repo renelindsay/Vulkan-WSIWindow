@@ -69,7 +69,7 @@ class CSwapchain {
 
     void Init(const CQueue* present_queue, const CQueue* graphics_queue=0);
 
-    void CreateCommandPool(uint32_t family);
+    //void CreateCommandPool(uint32_t family);
     void SetExtent();  //resize FrameBuffer image to match window surface
     //void SetFormat(VkFormat preferred_format = VK_FORMAT_B8G8R8A8_UNORM);
     void Apply();

@@ -89,6 +89,9 @@ struct CQueue {
     VkDevice        device;   // (used by CSwapchain)
     CPhysicalDevice gpu;      // (used by CSwapchain)
 
+    VkCommandPool   CreateCommandPool() const;
+    VkCommandBuffer CreateCommandBuffer(VkCommandPool command_pool) const;
+
     operator VkQueue() const {
         ASSERT(!!handle, "Queue not yet initialized. ");
         return handle; 
@@ -113,8 +116,6 @@ class CDevice {
         if(!handle) Create();
         return handle; 
     }
-
-
 };
 //----------------------------------------------------------------
 

@@ -162,8 +162,7 @@ void CDevice::Create() {
     }
 
     CDeviceExtensions& extensions = gpu.extensions;
-    VkDeviceCreateInfo device_create_info = {};
-    device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    VkDeviceCreateInfo device_create_info = {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
     device_create_info.queueCreateInfoCount    = (uint32_t)info_list.size();
     device_create_info.pQueueCreateInfos       = info_list.data();
     device_create_info.enabledExtensionCount   = extensions.PickCount();
@@ -199,6 +198,27 @@ CDevice::~CDevice() {
     LOGI("Logical device destroyed\n");
 }
 
+//------------------------------------CQueue---------------------------------------
+VkCommandPool CQueue::CreateCommandPool() const {
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = family;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VkCommandPool command_pool;
+    VKERRCHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &command_pool));
+    return command_pool;
+}
+
+VkCommandBuffer CQueue::CreateCommandBuffer(VkCommandPool command_pool) const {
+    VkCommandBufferAllocateInfo allocInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    allocInfo.commandPool = command_pool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+    VkCommandBuffer command_buffer;
+    VKERRCHECK(vkAllocateCommandBuffers(device, &allocInfo, &command_buffer));
+    return command_buffer;
+}
+//---------------------------------------------------------------------------------
 
 /*
 void CDevice::Print() {  // List created queues

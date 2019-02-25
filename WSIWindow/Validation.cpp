@@ -79,7 +79,7 @@ const char* VkResultStr(VkResult err) {
         STR(VK_ERROR_INCOMPATIBLE_DRIVER);    // -9
         STR(VK_ERROR_TOO_MANY_OBJECTS);       // -10
         STR(VK_ERROR_FORMAT_NOT_SUPPORTED);   // -11
-        // STR(VK_ERROR_FRAGMENTED_POOL);       // -12
+        STR(VK_ERROR_FRAGMENTED_POOL);        // -12
 
         STR(VK_ERROR_SURFACE_LOST_KHR);          // -1000000000
         STR(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR);  // -1000000001
@@ -88,6 +88,10 @@ const char* VkResultStr(VkResult err) {
         STR(VK_ERROR_INCOMPATIBLE_DISPLAY_KHR);  // -1000003001
         STR(VK_ERROR_VALIDATION_FAILED_EXT);     // -1000011001
         STR(VK_ERROR_INVALID_SHADER_NV);         // -1000012000
+
+        STR(VK_ERROR_OUT_OF_POOL_MEMORY);        // -1000069000
+        STR(VK_ERROR_INVALID_EXTERNAL_HANDLE);   // -1000072003
+        STR(VK_ERROR_NOT_PERMITTED_EXT);         // -1000174001
 #undef STR
     default: return "UNKNOWN_RESULT";
     }

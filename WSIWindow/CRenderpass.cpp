@@ -113,8 +113,7 @@ void CRenderpass::Create() {
     std::vector<VkSubpassDescription> subs(subpasses.size());
     repeat(subpasses.size()) subs[i] = subpasses[i];
 
-    VkRenderPassCreateInfo rp_info = {};
-    rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    VkRenderPassCreateInfo rp_info = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
     rp_info.pNext = NULL;
     rp_info.flags = 0;
     rp_info.attachmentCount = (uint32_t)attachments.size();

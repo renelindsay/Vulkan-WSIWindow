@@ -48,7 +48,7 @@
 //------------Fix for VS2013----------------
 #if _MSC_VER == 1800
 #ifndef snprintf
-#define snprintf _snprintf_s
+#define snprintf _snprintf
 #endif
 #endif
 //------------------------------------------
@@ -72,6 +72,8 @@
 //  Turn off the ENABLE_LOGGING flag in CMake, to strip out log messages and reduce exe size for release.
 
 #ifdef _WIN32
+    #define NOMINMAX
+    //#define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
     #define cTICK "\xFB" /* On Windows, use Square-root as tick mark */
     #define PAUSE system("pause")
