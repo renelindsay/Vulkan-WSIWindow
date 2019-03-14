@@ -9,10 +9,11 @@ CPipeline::CPipeline(VkDevice device, VkRenderPass renderpass) :
 
 CPipeline::~CPipeline(){
     if (device) vkDeviceWaitIdle(device);
-    if (pipelineLayout)   vkDestroyPipelineLayout(device, pipelineLayout,   nullptr);
-    if (graphicsPipeline) vkDestroyPipeline      (device, graphicsPipeline, nullptr);
-    if (vertShaderModule) vkDestroyShaderModule  (device, vertShaderModule, nullptr);
-    if (fragShaderModule) vkDestroyShaderModule  (device, fragShaderModule, nullptr);
+    //if (descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    if (pipelineLayout)      vkDestroyPipelineLayout     (device, pipelineLayout,      nullptr);
+    if (graphicsPipeline)    vkDestroyPipeline           (device, graphicsPipeline,    nullptr);
+    if (vertShaderModule)    vkDestroyShaderModule       (device, vertShaderModule,    nullptr);
+    if (fragShaderModule)    vkDestroyShaderModule       (device, fragShaderModule,    nullptr);
 }
 
 // -- Shader modules ---
@@ -57,6 +58,26 @@ VkShaderModule CPipeline::CreateShaderModule(const std::vector<char>& code) {
     return shaderModule;
 }
 // ---------------------
+/*
+void CPipeline::CreateDescriptorSetLayout() {
+    VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+    VKERRCHECK( vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) );
+}
+*/
+void CPipeline::DescriptorSetLayout(VkDescriptorSetLayout descriptorSetLayout){
+    this->descriptorSetLayout = descriptorSetLayout;
+}
+
 
 // --- Pipeline ---
 VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
@@ -81,10 +102,10 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
     // VertexInputState
     VkVertexInputBindingDescription vi_binding;
     vi_binding.binding = 0;
-    vi_binding.stride  = 20;  // sizeof vertex
+    vi_binding.stride  = 28;  // sizeof vertex
     vi_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription vi_attribs[2];
+    VkVertexInputAttributeDescription vi_attribs[3];
     vi_attribs[0].binding = 0;
     vi_attribs[0].location = 0;
     vi_attribs[0].format = VK_FORMAT_R32G32_SFLOAT;
@@ -95,10 +116,15 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
     vi_attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vi_attribs[1].offset = 8;
 
+    vi_attribs[2].binding = 0;
+    vi_attribs[2].location = 2;
+    vi_attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    vi_attribs[2].offset = 20;
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &vi_binding;
-    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    vertexInputInfo.vertexAttributeDescriptionCount = 3;
     vertexInputInfo.pVertexAttributeDescriptions = vi_attribs;
     //-----------------
 
@@ -176,7 +202,8 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     VKERRCHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 

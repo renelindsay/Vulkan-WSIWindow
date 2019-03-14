@@ -6,6 +6,8 @@
 *
 *  CAllocator wraps the "Vulkan Memory Allocator" library.
 *  Pass a CAllocator instance to the contructor of buffer and image contructors.
+*
+*  CBuffer is the base class for CVBO, CIBO and CUBO classes.
 *  Buffer types:
 *      CVBO : Vertex buffer object   : Array of structs (interleaved data)
 *      CIBO : Index buffer object    : Array of type uint16_t or uint32_t
@@ -15,7 +17,7 @@
 *      (WIP)
 *
 *  NOTE: "Vulkan Memory Allocator" fails to compile on VS2013. 
-*        Minimum supported compiler is now VS2015.
+*        Therefore, minimum supported compiler is now VS2015.
 *
 */
 
@@ -56,16 +58,16 @@ class CAllocator {
     void EndCmd();
     void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-    friend class CBuffer;
-    friend class CImage;
+    friend class CvkBuffer;
+    friend class CvkImage;
 
     void CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc);
     void DestroyBuffer(VkBuffer buffer, VmaAllocation alloc);
     
     //--UNTESTED--
     //void CreateImage(const void* data, VkExtent3D extent, VkImageUsageFlags usage, VmaMemoryUsage memtype, VkImage& image, VmaAllocation& alloc, VkImageView& imageView);
-    void CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& imageView);
-    void DestroyImage(VkImage image, VmaAllocation alloc);
+    void CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& view);
+    void DestroyImage(VkImage image, VkImageView view, VmaAllocation alloc);
     //------------
 public:
     CAllocator(const CQueue& queue, VkDeviceSize blockSize=256);
@@ -73,56 +75,64 @@ public:
 };
 //--------------------------------------------------------------------------------
 //-------------------------------------Buffers------------------------------------
-class CBuffer {
+class CvkBuffer {
     CAllocator*   allocator;
     VmaAllocation allocation;
     VkBuffer      buffer;
-    uint32_t      stride;
     uint32_t      count;
+protected:
+    uint32_t      stride;
 public:
-    CBuffer(CAllocator& allocator);
-    virtual ~CBuffer();
+    CvkBuffer(CAllocator& allocator);
+    virtual ~CvkBuffer();
     void Clear();
     void Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype=VMA_MEMORY_USAGE_GPU_ONLY);
     uint32_t Count() { return count; }
     operator VkBuffer () {return buffer;}
 };
 
-class CVBO : public CBuffer {
+class CVBO : public CvkBuffer {
 public:
-    using CBuffer::CBuffer;
+    using CvkBuffer::CvkBuffer;
     void Data(void* data, uint32_t count, uint32_t stride);
 };
 
-class CIBO : public CBuffer {
+class CIBO : public CvkBuffer {
 public:
-    using CBuffer::CBuffer;
+    using CvkBuffer::CvkBuffer;
     void Data(const uint16_t* data, uint32_t count);
     void Data(const uint32_t* data, uint32_t count);
 };
 
-class CUBO : public CBuffer {
+class CUBO : public CvkBuffer {
 public:
-    using CBuffer::CBuffer;
+    using CvkBuffer::CvkBuffer;
     void Data(void* data, uint32_t size);
+    uint32_t size(){ return stride; }
 };
 //--------------------------------------------------------------------------------
 //-------------------------------------Images-------------------------------------
-/*
-class CImage {
+
+class CvkImage {
     CAllocator*   allocator;
     VmaAllocation allocation;
     VkImage       image;
     VkImageView   view;
+    VkSampler     sampler;
     VkExtent2D    extent;
     VkFormat      format;
 public:
-    CImage(CAllocator& allocator);
-    virtual ~CImage();
+    CvkImage(CAllocator& allocator);
+    virtual ~CvkImage();
+    void Clear();
+    void Data(const void* data, VkExtent3D extent, VkFormat format = VK_FORMAT_B8G8R8A8_UNORM);
 
-    operator VkImage () {return image;}
+    void CreateSampler();
+
+    //operator VkImage () {return image;}
+    operator VkSampler () {return sampler;}
 };
-*/
+
 //--------------------------------------------------------------------------------
 
 

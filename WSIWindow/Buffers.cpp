@@ -234,7 +234,7 @@ void CAllocator::DestroyBuffer(VkBuffer buffer, VmaAllocation alloc) {
 //---------------------------------------------------
 
 //void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImageUsageFlags usage, VmaMemoryUsage memtype, VkImage& image, VmaAllocation& alloc, VkImageView& imageView) {
-void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& imageView) {
+void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& view) {
     // Copy image data to staging buffer in CPU memory
     uint64_t size = extent.width * extent.height * extent.depth * 4;
 
@@ -304,7 +304,7 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image
     imageViewInfo.subresourceRange.levelCount     = 1;
     imageViewInfo.subresourceRange.baseArrayLayer = 0;
     imageViewInfo.subresourceRange.layerCount     = 1;
-    VKERRCHECK( vkCreateImageView(device, &imageViewInfo, nullptr, &imageView) );
+    VKERRCHECK( vkCreateImageView(device, &imageViewInfo, nullptr, &view) );
 }
 
 void CAllocator::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -351,16 +351,17 @@ void CAllocator::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, V
     //EndCmd();
 }
 
-void CAllocator::DestroyImage(VkImage image, VmaAllocation alloc) {
+void CAllocator::DestroyImage(VkImage image, VkImageView view, VmaAllocation alloc) {
+    if(view) vkDestroyImageView(device, view, nullptr);
     vmaDestroyImage(allocator, image, alloc);
 }
 //---------------------------------------------------
 
-//------------------------CBuffer--------------------
-CBuffer::CBuffer(CAllocator& allocator) : allocator(&allocator), allocation(), buffer(), count(), stride() {}
-CBuffer::~CBuffer() { Clear(); }
+//-----------------------CvkBuffer-------------------
+CvkBuffer::CvkBuffer(CAllocator& allocator) : allocator(&allocator), allocation(), buffer(), count(), stride() {}
+CvkBuffer::~CvkBuffer() { Clear(); }
 
-void CBuffer::Clear() {
+void CvkBuffer::Clear() {
     vkQueueWaitIdle(allocator->queue);
     if(buffer) allocator->DestroyBuffer(buffer, allocation);
     buffer = 0;
@@ -368,7 +369,7 @@ void CBuffer::Clear() {
     stride = 0;
 }
 
-void CBuffer::Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype) {
+void CvkBuffer::Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype) {
     Clear();
     allocator->CreateBuffer(data, count * stride, usage, memtype, buffer, allocation);
     if(!buffer) return;
@@ -378,21 +379,66 @@ void CBuffer::Data(const void* data, uint32_t count, uint32_t stride, VkBufferUs
 //----------------------------------------------------
 //--------------------------VBO-----------------------
 void CVBO::Data(void* data, uint32_t count, uint32_t stride) {
-    CBuffer::Data(data, count, stride, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+    CvkBuffer::Data(data, count, stride, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 //----------------------------------------------------
 //--------------------------IBO-----------------------
 void CIBO::Data(const uint16_t* data, uint32_t count) {
-    CBuffer::Data(data, count, 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+    CvkBuffer::Data(data, count, 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 
 void CIBO::Data(const uint32_t* data, uint32_t count) {
-    CBuffer::Data(data, count, 4, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+    CvkBuffer::Data(data, count, 4, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 //----------------------------------------------------
 //--------------------------UBO-----------------------
 void CUBO::Data(void* data, uint32_t size) {
-    CBuffer::Data(data, 1, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    CvkBuffer::Data(data, 1, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 //----------------------------------------------------
 
+//-----------------------CvkImage--------------------
+
+CvkImage::CvkImage(CAllocator& allocator) : allocator(&allocator), allocation(), image(), view(), sampler(), extent(), format() {}
+CvkImage::~CvkImage() { Clear(); }
+
+void CvkImage::Clear() {
+    vkQueueWaitIdle(allocator->queue);
+
+    if(sampler) vkDestroySampler(allocator->device, sampler, nullptr);
+    if(image) allocator->DestroyImage(image, view, allocation);
+    image  = 0;
+    extent = {};
+    format = VK_FORMAT_UNDEFINED;
+}
+
+void CvkImage::Data(const void* data, VkExtent3D extent, VkFormat format) {
+    Clear();
+    allocator->CreateImage(data,  extent, image, allocation, view);
+    if(!image) return;
+    this->format = format;
+}
+
+void CvkImage::CreateSampler() {
+    VkSamplerCreateInfo samplerInfo = {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    
+    //samplerInfo.anisotropyEnable = VK_TRUE;
+    //samplerInfo.maxAnisotropy = 16;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1;
+
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    VKERRCHECK( vkCreateSampler(allocator->device, &samplerInfo, nullptr, &sampler) );
+}
+
+//---------------------------------------------------

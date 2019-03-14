@@ -18,10 +18,6 @@
 *
 *--------------------------------------------------------------------------
 *
-* This example project renders a triangle using 3 Vulkan wrapper classes:
-*   CRenderpass contains the subpasses and is used to set up the color and depth buffers.
-*   CPipeline loads the shaders and configures the graphics pipeline.
-*   CSwapchain manages the frame/command buffers and presents the result to the window surface.
 *
 */
 
@@ -31,6 +27,9 @@
 #include "CSwapchain.h"
 #include "CPipeline.h"
 #include "Buffers.h"
+#include "CImage.h"
+#include "matrix.h"
+#include "CDescriptor.h"
 
 //-- EVENT HANDLERS --
 class CWindow : public WSIWindow {
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]) {
     CInstance instance(true);                              // Create a Vulkan Instance
     instance.DebugReport.SetFlags(14);                     // Error+Perf+Warning flags
     CWindow Window;                                        // Create a Vulkan window
-    Window.SetTitle("WSI-Window Example3");                // Set the window title
+    Window.SetTitle("WSI-Window Example4");                // Set the window title
     Window.SetWinSize(640, 480);                           // Set the window size (Desktop)
     Window.SetWinPos(0, 0);                                // Set the window position to top-left
     VkSurfaceKHR surface = Window.GetSurface(instance);    // Create the Vulkan surface
@@ -81,26 +80,23 @@ int main(int argc, char *argv[]) {
     swapchain.Print();
     //-----------------
 
-    //--- Pipeline ---
-    CPipeline pipeline(device, renderpass);
-    pipeline.LoadVertShader("shaders/vert.spv");
-    pipeline.LoadFragShader("shaders/frag.spv");
-    pipeline.CreateGraphicsPipeline(swapchain.GetExtent());
-    printf("Pipeline created\n");
-    //----------------
-
     //--- Buffers ---
-    // vertex/index arrays
-    struct vec2{float x, y;};
-    struct vec3{float x, y, z;};
-    struct Vertex {vec2 pos; vec3 color;};
-
+    struct Vertex {vec2 pos; vec3 color; vec2 tc;};
     const std::vector<Vertex> vertices = {
-        {{ 0.0f,-0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{ 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        {{-0.5f,-0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f,-0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
-    const std::vector<uint16_t> index = { 0,1,2 };
+    const std::vector<uint16_t> index = { 0,1,2,  2, 3, 0 };
+
+    struct Uniforms {
+        mat4 model;
+        mat4 view;
+        mat4 proj;
+    } uniforms;
+
+    uniforms.model.RotateZ(45);
 
     CAllocator allocator(*graphics_queue);                                        // Create "Vulkan Memory Aloocator"
     printf("Allocator created\n");
@@ -116,6 +112,41 @@ int main(int argc, char *argv[]) {
     printf("IBO created\n");
     //---------------
 
+    // Uniform Buffer Object
+    CUBO ubo(allocator);
+    ubo.Data(&uniforms, sizeof(uniforms));
+    printf("UBO created\n");
+    //----------------------
+
+    // Textures
+    CImage img("vulkan.png");
+    CvkImage vkImg(allocator);
+    VkExtent3D extent = {(uint32_t)img.width, (uint32_t)img.height, 1 };
+    vkImg.Data(img.buf, extent);
+    vkImg.CreateSampler();
+    // ---------
+
+    //--- Descriptor ---
+    CDescriptors descriptor(device);
+    descriptor.CreateDescriptorSetLayout();
+    descriptor.CreateDescriptorPool();
+    descriptor.CreateDescriptorSet(ubo, ubo.size());
+
+    VkDescriptorSet* set = descriptor.getDescriptorSet();
+    //------------------
+
+    //--- Pipeline ---
+    CPipeline pipeline(device, renderpass);
+    pipeline.LoadVertShader("shaders/vert.spv");
+    pipeline.LoadFragShader("shaders/frag.spv");
+    //pipeline.CreateDescriptorSetLayout();
+    pipeline.DescriptorSetLayout(descriptor);
+    pipeline.CreateGraphicsPipeline(swapchain.GetExtent());
+    printf("Pipeline created\n");
+    //----------------
+
+
+
     //--- Main Loop ---
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
         VkCommandBuffer cmd_buf = swapchain.BeginFrame();
@@ -126,8 +157,11 @@ int main(int argc, char *argv[]) {
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(cmd_buf, 0, 1, vertexBuffers, offsets);
             //vkCmdDraw(cmd_buf, vbo.Count(), 1, 0, 0);
-
             vkCmdBindIndexBuffer(cmd_buf, ibo, 0, VK_INDEX_TYPE_UINT16);
+
+            //vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, set, 0, nullptr);
+
             vkCmdDrawIndexed(cmd_buf, ibo.Count(), 1, 0, 0, 0);
 
         swapchain.EndFrame();
