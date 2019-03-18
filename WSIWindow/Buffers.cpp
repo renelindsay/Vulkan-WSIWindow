@@ -185,7 +185,7 @@ void CAllocator::EndCmd() {
 }
 //-----------------------
 
-void CAllocator::CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc) {
+void CAllocator::CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc, void** mapped) {
     VkBufferCreateInfo bufInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
     bufInfo.size = size;
     bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -201,7 +201,8 @@ void CAllocator::CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlag
     if(memtype != VMA_MEMORY_USAGE_GPU_ONLY) {
         bufInfo.usage = usage;
         VKERRCHECK(vmaCreateBuffer(allocator, &bufInfo, &allocCreateInfo, &buffer, &alloc, &allocInfo));
-        memcpy(allocInfo.pMappedData, data, size);
+        if(data) { memcpy(allocInfo.pMappedData, data, size); } else { memset(allocInfo.pMappedData, 0, size); }
+        if(mapped) { *mapped = allocInfo.pMappedData; }
         return;
     }
 
@@ -369,9 +370,9 @@ void CvkBuffer::Clear() {
     stride = 0;
 }
 
-void CvkBuffer::Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype) {
+void CvkBuffer::Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype, void** mapped ) {
     Clear();
-    allocator->CreateBuffer(data, count * stride, usage, memtype, buffer, allocation);
+    allocator->CreateBuffer(data, count * stride, usage, memtype, buffer, allocation, mapped);
     if(!buffer) return;
     this->count = count;
     this->stride = stride;
@@ -392,12 +393,23 @@ void CIBO::Data(const uint32_t* data, uint32_t count) {
 }
 //----------------------------------------------------
 //--------------------------UBO-----------------------
+/*
 void CUBO::Data(void* data, uint32_t size) {
-    CvkBuffer::Data(data, 1, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    CvkBuffer::Data(data, 1, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, &mapped);
 }
+*/
+
+void CUBO::Allocate(uint32_t size) {
+    CvkBuffer::Data(0, 1, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, &mapped);
+}
+
+void CUBO::Update(void* data){
+    memcpy(mapped, data, stride);
+}
+
 //----------------------------------------------------
 
-//-----------------------CvkImage--------------------
+//-----------------------CvkImage---------------------
 
 CvkImage::CvkImage(CAllocator& allocator) : allocator(&allocator), allocation(), image(), view(), sampler(), extent(), format() {}
 CvkImage::~CvkImage() { Clear(); }
@@ -440,5 +452,5 @@ void CvkImage::CreateSampler() {
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     VKERRCHECK( vkCreateSampler(allocator->device, &samplerInfo, nullptr, &sampler) );
 }
+//----------------------------------------------------
 
-//---------------------------------------------------

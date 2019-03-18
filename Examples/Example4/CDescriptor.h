@@ -18,7 +18,7 @@ public:
 
     void CreateDescriptorSetLayout();
     void CreateDescriptorPool();
-    void CreateDescriptorSet(VkBuffer ubo, uint32_t size);
+    void CreateDescriptorSet(VkBuffer ubo, uint32_t size, VkImageView imageView, VkSampler sampler);
 
     VkDescriptorSet* getDescriptorSet() {return &descriptorSets[0];};  // tmp
 

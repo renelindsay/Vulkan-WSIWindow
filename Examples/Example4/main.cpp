@@ -81,14 +81,14 @@ int main(int argc, char *argv[]) {
     //-----------------
 
     //--- Buffers ---
-    struct Vertex {vec2 pos; vec3 color; vec2 tc;};
+    struct Vertex {vec3 pos; vec3 color; vec2 tc;};
     const std::vector<Vertex> vertices = {
-        {{-0.5f,-0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,-0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+        {{-0.5f,-0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f,-0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
     };
-    const std::vector<uint16_t> index = { 0,1,2,  2, 3, 0 };
+    const std::vector<uint16_t> index = { 0, 1, 2,  2, 3, 0 };
 
     struct Uniforms {
         mat4 model;
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
         mat4 proj;
     } uniforms;
 
-    uniforms.model.RotateZ(45);
+    uniforms.view.Translate(0,0,-4);
 
     CAllocator allocator(*graphics_queue);                                        // Create "Vulkan Memory Aloocator"
     printf("Allocator created\n");
@@ -114,7 +114,9 @@ int main(int argc, char *argv[]) {
 
     // Uniform Buffer Object
     CUBO ubo(allocator);
-    ubo.Data(&uniforms, sizeof(uniforms));
+    //ubo.Data(&uniforms, sizeof(uniforms));
+    ubo.Allocate(sizeof(uniforms));
+    //ubo.Update(&uniforms);
     printf("UBO created\n");
     //----------------------
 
@@ -130,7 +132,7 @@ int main(int argc, char *argv[]) {
     CDescriptors descriptor(device);
     descriptor.CreateDescriptorSetLayout();
     descriptor.CreateDescriptorPool();
-    descriptor.CreateDescriptorSet(ubo, ubo.size());
+    descriptor.CreateDescriptorSet(ubo, ubo.size(), vkImg.view, vkImg.sampler);
 
     VkDescriptorSet* set = descriptor.getDescriptorSet();
     //------------------
@@ -145,18 +147,27 @@ int main(int argc, char *argv[]) {
     printf("Pipeline created\n");
     //----------------
 
-
-
     //--- Main Loop ---
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
+
+        VkExtent2D ext  = swapchain.GetExtent();
+        VkRect2D   scissor = {{0, 0}, ext};
+        VkViewport viewport = {0, 0, (float)ext.width, (float)ext.height, 0, 1};
+
+        float aspect = (float)ext.width/(float)ext.height;
+        uniforms.proj.SetProjection(aspect, 40.f, 1, 1000);
+
+        uniforms.model.RotateZ(1);
+        ubo.Update(&uniforms);         // memcpy(ubo.mapped, &uniforms, ubo.size());
+
         VkCommandBuffer cmd_buf = swapchain.BeginFrame();
             vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-//            vkCmdDraw(cmd_buf, 3, 1, 0, 0);
+            vkCmdSetViewport(cmd_buf,0,1, &viewport);
+            vkCmdSetScissor(cmd_buf,0,1, &scissor);
 
             VkBuffer vertexBuffers[] = {vbo};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(cmd_buf, 0, 1, vertexBuffers, offsets);
-            //vkCmdDraw(cmd_buf, vbo.Count(), 1, 0, 0);
             vkCmdBindIndexBuffer(cmd_buf, ibo, 0, VK_INDEX_TYPE_UINT16);
 
             //vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);

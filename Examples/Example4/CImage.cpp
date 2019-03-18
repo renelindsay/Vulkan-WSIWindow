@@ -1,6 +1,7 @@
 #pragma warning(disable: 4996)
 
 #include "CImage.h"
+#include "Validation.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -13,10 +14,6 @@
 #include <string.h>
 
 #define repeat(COUNT) for(int i = 0; i < COUNT; ++i)
-
-#ifdef WIN32
-    void* aligned_alloc(size_t alignment, size_t size) {return _aligned_malloc(size, alignment);}
-#endif
 
 static bool file_exists(const char *fileName) {
     std::ifstream infile(fileName);
@@ -50,7 +47,7 @@ void CImage::move_ctor(CImage& other) {
 // move assignment operator
 CImage& CImage::operator=(CImage&& other) {  // not used?
     if(this == &other) return *this;
-    if(buf) _aligned_free(buf);
+    if(buf) align_free(buf);
     move_ctor(other);
     return *this;
 }
@@ -59,8 +56,8 @@ void CImage::SetSize(const int w, const int h) {
     uint align = 64;  // 64-byte aligned buffer
     width  = w;
     height = h;
-    if (!!buf) _aligned_free(buf);
-    buf = (RGBA*)aligned_alloc(align, (uint)w * (uint)h * sizeof(RGBA));
+    if (!!buf) align_free(buf);
+    buf = (RGBA*)align_alloc(align, (uint)w * (uint)h * sizeof(RGBA));
 }
 /*
 RGBA& CImage::Pixel(int x, int y) {
@@ -105,11 +102,12 @@ void CImage::Clear(RGBA& color) {
 }
 
 bool CImage::Load(const char* filename, bool flip) {
-    if(!file_exists(filename)) { printf("CImage: File not found: %s\n", filename);  return false; }
+    //if(!file_exists(filename)) { printf("CImage: File not found: %s\n", filename);  return false; }
     int w, h, n;
     stbi_set_flip_vertically_on_load(flip);
     char* tmp=(char*)stbi_load(filename, &w, &h, &n, sizeof(RGBA));
-    if(tmp) { 
+    if(tmp) {
+        printf("Load image: %s (%dx%d)\n", filename, w, h);
         SetSize(w, h);
         memcpy(buf,tmp, (uint)w * (uint)h * sizeof(RGBA));
         stbi_image_free(tmp);

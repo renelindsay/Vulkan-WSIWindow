@@ -8,6 +8,18 @@
 
 typedef uint32_t uint;
 
+
+#ifdef WIN32
+    static void* align_alloc(size_t alignment, size_t size) {return _aligned_malloc(size, alignment);}
+    static void  align_free(void* memblock) {_aligned_free(memblock);}
+#elif LINUX
+    static void* align_alloc(size_t alignment, size_t size) {return aligned_alloc(alignment, size)}
+    static void  align_free(void* memblock) {free(memblock);}
+#elif ANDROID
+    static void* align_alloc(size_t alignment, size_t size) {return malloc(size);}
+    static void  align_free(void* memblock) {free(memblock);}
+#endif
+
 //--------------------------------------------------
 // 8 bit per channel sRGBA (gamma)
 struct RGBA { 
@@ -41,7 +53,7 @@ public:
     CImage(){}
     CImage(const char* filename){ Load(filename); }
     CImage(const int width, const int height){ SetSize(width, height); }
-    ~CImage(){ if(!!buf) _aligned_free(buf); buf=nullptr; }
+    ~CImage(){ if(!!buf) align_free(buf); buf=nullptr; }
 
     //-- Enable move --
     CImage(CImage&& other) { move_ctor(other); }

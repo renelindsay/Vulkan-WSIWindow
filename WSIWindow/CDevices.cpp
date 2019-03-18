@@ -7,7 +7,7 @@ CPhysicalDevice::CPhysicalDevice() : handle(0), properties(), features(), extens
 
 const char* CPhysicalDevice::VendorName() const {
     struct {const uint id; const char* name;} vendors[] =
-    {{0x1002, "AMD"}, {0x10DE, "NVIDIA"}, {0x8086, "INTEL"}, {0x13B5, "ARM"}, {0x5143, "Qualcomm"}, {0x1010, "ImgTec"}};
+    {{0x1002, "AMD"}, {0x10DE, "NVIDIA"}, {0x8086, "INTEL"}, {0x13B5, "ARM"}, {0x5143, "Qualcomm"}, {0x1010, "Imagination"}};
     for (auto vendor : vendors) if (vendor.id == properties.vendorID) return vendor.name;
     return "";
 }

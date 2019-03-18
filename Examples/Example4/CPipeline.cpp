@@ -102,24 +102,24 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
     // VertexInputState
     VkVertexInputBindingDescription vi_binding;
     vi_binding.binding = 0;
-    vi_binding.stride  = 28;  // sizeof vertex
+    vi_binding.stride  = 32;  // sizeof vertex
     vi_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     VkVertexInputAttributeDescription vi_attribs[3];
     vi_attribs[0].binding = 0;
     vi_attribs[0].location = 0;
-    vi_attribs[0].format = VK_FORMAT_R32G32_SFLOAT;
+    vi_attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     vi_attribs[0].offset = 0;
 
     vi_attribs[1].binding = 0;
     vi_attribs[1].location = 1;
     vi_attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vi_attribs[1].offset = 8;
+    vi_attribs[1].offset = 12;
 
     vi_attribs[2].binding = 0;
     vi_attribs[2].location = 2;
     vi_attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
-    vi_attribs[2].offset = 20;
+    vi_attribs[2].offset = 24;
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
     vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -200,6 +200,16 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
+    //VkDynamicState dynamicStates[VK_DYNAMIC_STATE_RANGE_SIZE] = {};
+    //VkPipelineDynamicStateCreateInfo dynamicState = {VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+    //dynamicState.pDynamicStates = dynamicStates;
+    //dynamicState.dynamicStateCount = 0;
+
+    VkDynamicState dynamicStates[VK_DYNAMIC_STATE_RANGE_SIZE] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamicState = {VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+    dynamicState.pDynamicStates = dynamicStates;
+    dynamicState.dynamicStateCount = 2;
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
@@ -218,7 +228,7 @@ VkPipeline CPipeline::CreateGraphicsPipeline(VkExtent2D extent) {
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pDepthStencilState = &depthStencilState;
     pipelineInfo.pColorBlendState = &colorBlending;
-    //pipelineInfo.pDynamicState = 0;
+    pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.renderPass = renderpass;
     pipelineInfo.subpass = 0;

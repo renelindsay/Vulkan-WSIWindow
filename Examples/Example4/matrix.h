@@ -104,7 +104,7 @@ struct vec2 {
 //-----------------------------------
 
 //----------------vec3---------------
-struct vec3{
+struct vec3 {
     float x, y, z;
     vec3() {}
     vec3(float* f) { x=f[0]; y=f[1]; z=f[2]; }
@@ -227,7 +227,6 @@ struct quat {  // TODO
 
 
 //--------------matrix---------------
-//class alignas(32) mat4 {
 class alignas(16) mat4 {
 public:
     union{
@@ -252,9 +251,13 @@ public:
         };
     };
 
-    const float Identity4x4[16] {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     void Set(const float* f){ memcpy(m,f,sizeof(m)); }
-    inline void Clear(){ Set((float*)Identity4x4); }                    // Reset this matrix to Identity.
+
+    inline void Clear() { 
+        const float Identity4x4[16] {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}; // Reset this matrix to Identity.
+        Set(Identity4x4);
+    }
+
     inline void ClearRot() { vec3 pos = position; Clear(); position = pos; }
 
     float& operator [] (uint i) { return m[i]; }                         // array operator

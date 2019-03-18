@@ -6,7 +6,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")
-aux_source_directory(. SRC_LIST)
+
+file(GLOB SRC_LIST "*.h" "*.cpp")  
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 #---------------Find WSIWindow---------------

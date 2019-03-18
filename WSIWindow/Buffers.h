@@ -61,7 +61,7 @@ class CAllocator {
     friend class CvkBuffer;
     friend class CvkImage;
 
-    void CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc);
+    void CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc, void** mapped = 0);
     void DestroyBuffer(VkBuffer buffer, VmaAllocation alloc);
     
     //--UNTESTED--
@@ -83,10 +83,12 @@ class CvkBuffer {
 protected:
     uint32_t      stride;
 public:
+    void* mapped = nullptr;
+
     CvkBuffer(CAllocator& allocator);
     virtual ~CvkBuffer();
     void Clear();
-    void Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype=VMA_MEMORY_USAGE_GPU_ONLY);
+    void Data(const void* data, uint32_t count, uint32_t stride, VkBufferUsageFlagBits usage, VmaMemoryUsage memtype=VMA_MEMORY_USAGE_GPU_ONLY, void** mapped = nullptr);
     uint32_t Count() { return count; }
     operator VkBuffer () {return buffer;}
 };
@@ -107,7 +109,10 @@ public:
 class CUBO : public CvkBuffer {
 public:
     using CvkBuffer::CvkBuffer;
-    void Data(void* data, uint32_t size);
+    //void Data(void* data, uint32_t size);
+    void Allocate(uint32_t size);
+    void Update(void* data);
+
     uint32_t size(){ return stride; }
 };
 //--------------------------------------------------------------------------------
@@ -117,11 +122,14 @@ class CvkImage {
     CAllocator*   allocator;
     VmaAllocation allocation;
     VkImage       image;
-    VkImageView   view;
-    VkSampler     sampler;
+    //VkImageView   view;
+    //VkSampler     sampler;
     VkExtent2D    extent;
     VkFormat      format;
 public:
+    VkImageView   view;
+    VkSampler     sampler;
+
     CvkImage(CAllocator& allocator);
     virtual ~CvkImage();
     void Clear();
@@ -130,7 +138,8 @@ public:
     void CreateSampler();
 
     //operator VkImage () {return image;}
-    operator VkSampler () {return sampler;}
+    //operator VkImageView () {return view;}
+    //operator VkSampler   () {return sampler;}
 };
 
 //--------------------------------------------------------------------------------
