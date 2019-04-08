@@ -3,6 +3,7 @@
 
 #include "WSIWindow.h"
 #include "CSwapchain.h"
+#include "CShaders.h"
 
 class CPipeline {
     VkDescriptorSetLayout descriptorSetLayout;
@@ -32,6 +33,33 @@ class CPipeline {
     operator VkPipeline() const { return graphicsPipeline; }
     //operator VkPipelineLayout() const { return pipelineLayout; }
 };
+
+
+//--------------------------------------------------------------------------
+
+
+
+class CPipeline2 {
+    VkDevice     device;
+    VkRenderPass renderpass;
+    VkPipeline   graphicsPipeline;
+  public:
+    VkPipelineLayout pipelineLayout;
+
+    VkDescriptorSetLayout                 descriptorSetLayout;
+    VkPipelineShaderStageCreateInfo*      shaderStages;
+    VkPipelineVertexInputStateCreateInfo* vertexInputs;
+
+    CPipeline2(VkDevice device, VkRenderPass renderpass, CShaders& shaders);
+    ~CPipeline2();
+
+    VkPipeline CreateGraphicsPipeline(VkExtent2D extent = {64,64});
+    operator VkPipeline() const { return graphicsPipeline; }
+
+
+};
+
+
 
 #endif
 

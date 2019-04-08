@@ -47,17 +47,16 @@ void CImage::move_ctor(CImage& other) {
 // move assignment operator
 CImage& CImage::operator=(CImage&& other) {  // not used?
     if(this == &other) return *this;
-    if(buf) align_free(buf);
+    if(buf) free(buf);
     move_ctor(other);
     return *this;
 }
 
 void CImage::SetSize(const int w, const int h) {
-    uint align = 64;  // 64-byte aligned buffer
     width  = w;
     height = h;
-    if (!!buf) align_free(buf);
-    buf = (RGBA*)align_alloc(align, (uint)w * (uint)h * sizeof(RGBA));
+    if (!!buf) free(buf);
+    buf = (RGBA*) malloc((uint)w * (uint)h * sizeof(RGBA));
 }
 /*
 RGBA& CImage::Pixel(int x, int y) {
@@ -102,7 +101,7 @@ void CImage::Clear(RGBA& color) {
 }
 
 bool CImage::Load(const char* filename, bool flip) {
-    //if(!file_exists(filename)) { printf("CImage: File not found: %s\n", filename);  return false; }
+    if(!file_exists(filename)) { printf("CImage: File not found: %s\n", filename);  return false; }
     int w, h, n;
     stbi_set_flip_vertically_on_load(flip);
     char* tmp=(char*)stbi_load(filename, &w, &h, &n, sizeof(RGBA));

@@ -30,6 +30,8 @@
 #include "CImage.h"
 #include "matrix.h"
 #include "CDescriptor.h"
+#include "CShaders.h"
+
 
 //-- EVENT HANDLERS --
 class CWindow : public WSIWindow {
@@ -128,6 +130,8 @@ int main(int argc, char *argv[]) {
     vkImg.CreateSampler();
     // ---------
 
+
+/*
     //--- Descriptor ---
     CDescriptors descriptor(device);
     descriptor.CreateDescriptorSetLayout();
@@ -146,6 +150,25 @@ int main(int argc, char *argv[]) {
     pipeline.CreateGraphicsPipeline(swapchain.GetExtent());
     printf("Pipeline created\n");
     //----------------
+*/
+
+
+
+    //--
+    CShaders shaders(device);
+    shaders.LoadVertShader("shaders/vert.spv");
+    shaders.LoadFragShader("shaders/frag.spv");
+    shaders.CreateDescriptorSetLayout();
+    shaders.CreateDescriptorPool();
+    shaders.Bind("ubo", ubo);
+    shaders.Bind("texSampler", vkImg.view, vkImg.sampler);
+    VkDescriptorSet descriptorSet = shaders.CreateDescriptorSet();
+    //VkDescriptorSet* set = &descriptorSet;
+
+    CPipeline2 pipeline2(device, renderpass, shaders);
+    pipeline2.CreateGraphicsPipeline();
+    //--
+
 
     //--- Main Loop ---
     while (Window.ProcessEvents()) {  // Main event loop, runs until window is closed.
@@ -161,7 +184,7 @@ int main(int argc, char *argv[]) {
         ubo.Update(&uniforms);         // memcpy(ubo.mapped, &uniforms, ubo.size());
 
         VkCommandBuffer cmd_buf = swapchain.BeginFrame();
-            vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2);
             vkCmdSetViewport(cmd_buf,0,1, &viewport);
             vkCmdSetScissor(cmd_buf,0,1, &scissor);
 
@@ -170,8 +193,8 @@ int main(int argc, char *argv[]) {
             vkCmdBindVertexBuffers(cmd_buf, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(cmd_buf, ibo, 0, VK_INDEX_TYPE_UINT16);
 
-            //vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-            vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, set, 0, nullptr);
+            //vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, set, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2.pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
             vkCmdDrawIndexed(cmd_buf, ibo.Count(), 1, 0, 0, 0);
 

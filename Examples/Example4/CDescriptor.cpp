@@ -63,7 +63,7 @@ void CDescriptors::CreateDescriptorSet(VkBuffer ubo, uint32_t size, VkImageView 
     std::vector<VkDescriptorSetLayout> layouts(numSwapChainImages, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(numSwapChainImages);
+    allocInfo.descriptorSetCount = numSwapChainImages;
     allocInfo.pSetLayouts = layouts.data();
 
     descriptorSets.resize(numSwapChainImages);
@@ -73,7 +73,7 @@ void CDescriptors::CreateDescriptorSet(VkBuffer ubo, uint32_t size, VkImageView 
         VkDescriptorBufferInfo bufferInfo = {};
         bufferInfo.buffer = ubo;  //uniformBuffers[i];
         bufferInfo.offset = 0;
-        bufferInfo.range = size; //sizeof(UniformBufferObject);
+        bufferInfo.range = VK_WHOLE_SIZE;  //size; //sizeof(UniformBufferObject);
 
         VkDescriptorImageInfo imageInfo = {};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
