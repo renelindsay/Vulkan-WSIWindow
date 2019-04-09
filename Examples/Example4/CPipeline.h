@@ -6,57 +6,18 @@
 #include "CShaders.h"
 
 class CPipeline {
-    VkDescriptorSetLayout descriptorSetLayout;
-    //VkPipelineLayout      pipelineLayout;
-    VkPipeline            graphicsPipeline;
-    VkShaderModule        vertShaderModule;
-    VkShaderModule        fragShaderModule;
-
-    VkShaderModule LoadShader(const char* filename);
-    VkShaderModule CreateShaderModule(const std::vector<char>& code);
-    VkDevice     device;
-    VkRenderPass renderpass;
-
-  public:
-    VkPipelineLayout      pipelineLayout;
-
-
-    CPipeline(VkDevice device, VkRenderPass renderpass);
-    ~CPipeline();
-    bool LoadVertShader(const char* filename);
-    bool LoadFragShader(const char* filename);
-
-    //void CreateDescriptorSetLayout();
-    void DescriptorSetLayout(VkDescriptorSetLayout descriptorSetLayout);
-
-    VkPipeline CreateGraphicsPipeline(VkExtent2D extent = {64,64});
-    operator VkPipeline() const { return graphicsPipeline; }
-    //operator VkPipelineLayout() const { return pipelineLayout; }
-};
-
-
-//--------------------------------------------------------------------------
-
-
-
-class CPipeline2 {
     VkDevice     device;
     VkRenderPass renderpass;
     VkPipeline   graphicsPipeline;
+    CShaders*    shaders;
   public:
     VkPipelineLayout pipelineLayout;
 
-    VkDescriptorSetLayout                 descriptorSetLayout;
-    VkPipelineShaderStageCreateInfo*      shaderStages;
-    VkPipelineVertexInputStateCreateInfo* vertexInputs;
+    CPipeline(VkDevice device, VkRenderPass renderpass, CShaders& shaders);
+    ~CPipeline();
 
-    CPipeline2(VkDevice device, VkRenderPass renderpass, CShaders& shaders);
-    ~CPipeline2();
-
-    VkPipeline CreateGraphicsPipeline(VkExtent2D extent = {64,64});
+    VkPipeline CreateGraphicsPipeline();
     operator VkPipeline() const { return graphicsPipeline; }
-
-
 };
 
 

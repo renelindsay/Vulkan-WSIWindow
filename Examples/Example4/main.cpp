@@ -29,7 +29,6 @@
 #include "Buffers.h"
 #include "CImage.h"
 #include "matrix.h"
-#include "CDescriptor.h"
 #include "CShaders.h"
 
 
@@ -130,43 +129,16 @@ int main(int argc, char *argv[]) {
     vkImg.CreateSampler();
     // ---------
 
-
-/*
-    //--- Descriptor ---
-    CDescriptors descriptor(device);
-    descriptor.CreateDescriptorSetLayout();
-    descriptor.CreateDescriptorPool();
-    descriptor.CreateDescriptorSet(ubo, ubo.size(), vkImg.view, vkImg.sampler);
-
-    VkDescriptorSet* set = descriptor.getDescriptorSet();
-    //------------------
-
-    //--- Pipeline ---
-    CPipeline pipeline(device, renderpass);
-    pipeline.LoadVertShader("shaders/vert.spv");
-    pipeline.LoadFragShader("shaders/frag.spv");
-    //pipeline.CreateDescriptorSetLayout();
-    pipeline.DescriptorSetLayout(descriptor);
-    pipeline.CreateGraphicsPipeline(swapchain.GetExtent());
-    printf("Pipeline created\n");
-    //----------------
-*/
-
-
-
     //--
     CShaders shaders(device);
     shaders.LoadVertShader("shaders/vert.spv");
     shaders.LoadFragShader("shaders/frag.spv");
-    shaders.CreateDescriptorSetLayout();
-    shaders.CreateDescriptorPool();
     shaders.Bind("ubo", ubo);
     shaders.Bind("texSampler", vkImg.view, vkImg.sampler);
     VkDescriptorSet descriptorSet = shaders.CreateDescriptorSet();
-    //VkDescriptorSet* set = &descriptorSet;
 
-    CPipeline2 pipeline2(device, renderpass, shaders);
-    pipeline2.CreateGraphicsPipeline();
+    CPipeline pipeline(device, renderpass, shaders);
+    pipeline.CreateGraphicsPipeline();
     //--
 
 
@@ -184,7 +156,7 @@ int main(int argc, char *argv[]) {
         ubo.Update(&uniforms);         // memcpy(ubo.mapped, &uniforms, ubo.size());
 
         VkCommandBuffer cmd_buf = swapchain.BeginFrame();
-            vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2);
+            vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
             vkCmdSetViewport(cmd_buf,0,1, &viewport);
             vkCmdSetScissor(cmd_buf,0,1, &scissor);
 
@@ -192,9 +164,7 @@ int main(int argc, char *argv[]) {
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(cmd_buf, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(cmd_buf, ibo, 0, VK_INDEX_TYPE_UINT16);
-
-            //vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, set, 0, nullptr);
-            vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline2.pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
             vkCmdDrawIndexed(cmd_buf, ibo.Count(), 1, 0, 0, 0);
 
