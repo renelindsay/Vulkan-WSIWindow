@@ -16,6 +16,10 @@
 #define repeat(COUNT) for(int i = 0; i < COUNT; ++i)
 
 static bool file_exists(const char *fileName) {
+#ifdef ANDROID
+    return true;
+#endif
+
     std::ifstream infile(fileName);
     return infile.good();
 }

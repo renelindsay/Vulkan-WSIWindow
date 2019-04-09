@@ -234,8 +234,8 @@ void CAllocator::DestroyBuffer(VkBuffer buffer, VmaAllocation alloc) {
 }
 //---------------------------------------------------
 
-//void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImageUsageFlags usage, VmaMemoryUsage memtype, VkImage& image, VmaAllocation& alloc, VkImageView& imageView) {
-void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& view) {
+void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat format, bool mipmap,
+    VkImage& image, VmaAllocation& alloc, VkImageView& view) {
     // Copy image data to staging buffer in CPU memory
     uint64_t size = extent.width * extent.height * extent.depth * 4;
 
@@ -258,7 +258,7 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image
     VkImageCreateInfo imageInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageInfo.flags       = 0;
     imageInfo.imageType   = VK_IMAGE_TYPE_2D;
-    imageInfo.format      = VK_FORMAT_R8G8B8A8_UNORM;
+    imageInfo.format      = format; //VK_FORMAT_R8G8B8A8_UNORM;
     imageInfo.extent      = extent;
     imageInfo.mipLevels   = 1;
     imageInfo.arrayLayers = 1;
@@ -299,7 +299,7 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkImage& image
     VkImageViewCreateInfo imageViewInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
     imageViewInfo.image = image;
     imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+    imageViewInfo.format = format;  //VK_FORMAT_R8G8B8A8_UNORM;
     imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageViewInfo.subresourceRange.baseMipLevel   = 0;
     imageViewInfo.subresourceRange.levelCount     = 1;
@@ -424,9 +424,9 @@ void CvkImage::Clear() {
     format = VK_FORMAT_UNDEFINED;
 }
 
-void CvkImage::Data(const void* data, VkExtent3D extent, VkFormat format) {
+void CvkImage::Data(const void* data, VkExtent3D extent, VkFormat format, bool mipmap) {
     Clear();
-    allocator->CreateImage(data,  extent, image, allocation, view);
+    allocator->CreateImage(data,  extent, format, mipmap, image, allocation, view);
     if(!image) return;
     this->format = format;
 }

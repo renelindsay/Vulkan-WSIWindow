@@ -77,7 +77,7 @@ uint32_t CRenderpass::AddColorAttachment(VkFormat format, VkClearColorValue clea
 }
 
 uint32_t CRenderpass::AddDepthAttachment(VkFormat format, VkClearDepthStencilValue clearVal) {
-    ASSERT(depth_format == VK_FORMAT_UNDEFINED, "Renderpass can't have more than one depth buffer. ");
+//    ASSERT(depth_format == VK_FORMAT_UNDEFINED, "Renderpass can't have more than one depth buffer. ");
     depth_format = format;
 
     clearValues.push_back({});

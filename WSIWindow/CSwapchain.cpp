@@ -196,8 +196,21 @@ const char* FormatStr(VkFormat fmt) {
 #undef STR
 }
 
+const char* PresentModeName(VkPresentModeKHR mode) {
+    switch(mode) {
+        case 0 :          return "VK_PRESENT_MODE_IMMEDIATE_KHR";
+        case 1 :          return "VK_PRESENT_MODE_MAILBOX_KHR";
+        case 2 :          return "VK_PRESENT_MODE_FIFO_KHR";
+        case 3 :          return "VK_PRESENT_MODE_FIFO_RELAXED_KHR";
+        case 1000111000 : return "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR";
+        case 1000111001 : return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
+        default :         return "UNKNOWN";
+    };
+}
+
 void CSwapchain::Print() {
     printf("Swapchain:\n");
+
     printf("\tFormat  = %3d : %s\n", info.imageFormat,    FormatStr(info.imageFormat));
     printf("\tDepth   = %3d : %s\n", depth_buffer.format, FormatStr(depth_buffer.format));
 
@@ -207,10 +220,8 @@ void CSwapchain::Print() {
 
     auto modes = GetPresentModes(gpu, surface);
     printf("\tPresentMode:\n");
-    const char* mode_names[] = {"VK_PRESENT_MODE_IMMEDIATE_KHR", "VK_PRESENT_MODE_MAILBOX_KHR",
-                                "VK_PRESENT_MODE_FIFO_KHR", "VK_PRESENT_MODE_FIFO_RELAXED_KHR"};
     VkPresentModeKHR& mode = info.presentMode;
-    for (auto m : modes) print((m == mode) ? eRESET : eFAINT, "\t\t%s %s\n", (m == mode) ? cTICK : " ",mode_names[m]);
+    for (auto m : modes) print((m == mode) ? eRESET : eFAINT, "\t\t%s %s\n", (m == mode) ? cTICK : " ",PresentModeName(m));
 }
 
 void CSwapchain::Apply() {

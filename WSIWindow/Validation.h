@@ -130,7 +130,7 @@ void color(eColor color);
     #define  LOGI(...) {}
     #define  LOGW(...) {}
     #define  LOGE(...) {}
-    #define ASSERT(EXPRESSION, ...)
+    #define ASSERT(EXPRESSION, ...) {}
 #endif
 //----------------------------------------------------------------------------------
 

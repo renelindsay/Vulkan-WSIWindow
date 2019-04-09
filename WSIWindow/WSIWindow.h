@@ -30,7 +30,7 @@
 *  and process, using a case statement.  For an example, see the "ProcessEvents" implementation.
 *
 *  For callbacks, use the "ProcessEvents" function to dispatch all queued events to their
-*  appropriate event handlers.  To create event handlers, derrive your class from WSIWindow,
+*  appropriate event handlers.  To create event handlers, derive your class from WSIWindow,
 *  and override the virtual event handler functions below.
 *
 *--------------------------------------------------------------------------

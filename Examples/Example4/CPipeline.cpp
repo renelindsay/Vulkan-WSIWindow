@@ -10,7 +10,6 @@ CPipeline::CPipeline(VkDevice device, VkRenderPass renderpass, CShaders& shaders
 
 CPipeline::~CPipeline(){
     if (device) vkDeviceWaitIdle(device);
-    //if (descriptorSetLayout) vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
     if (pipelineLayout)      vkDestroyPipelineLayout     (device, pipelineLayout,      nullptr);
     if (graphicsPipeline)    vkDestroyPipeline           (device, graphicsPipeline,    nullptr);
 }
@@ -81,11 +80,6 @@ VkPipeline CPipeline::CreateGraphicsPipeline() {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    //VkDynamicState dynamicStates[VK_DYNAMIC_STATE_RANGE_SIZE] = {};
-    //VkPipelineDynamicStateCreateInfo dynamicState = {VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
-    //dynamicState.pDynamicStates = dynamicStates;
-    //dynamicState.dynamicStateCount = 0;
-
     VkDynamicState dynamicStates[VK_DYNAMIC_STATE_RANGE_SIZE] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamicState = {VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
     dynamicState.pDynamicStates = dynamicStates;
@@ -99,9 +93,9 @@ VkPipeline CPipeline::CreateGraphicsPipeline() {
     VKERRCHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-    pipelineInfo.stageCount = (uint32_t)shaders->shaderStages.size();  //2
+    pipelineInfo.stageCount = (uint32_t)shaders->shaderStages.size();
     pipelineInfo.pStages              = shaders->shaderStages.data();
-    pipelineInfo.pVertexInputState    = shaders->VertexInputs();  //vertexInputs;
+    pipelineInfo.pVertexInputState   = &shaders->vertexInputs;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     //pipelineInfo.pTessellationState = 0;
     pipelineInfo.pViewportState = &viewportState;

@@ -1,7 +1,7 @@
 // * Copyright (C) 2019 by Rene Lindsay
 
 /*
-*  CSwapchain uses this class to allocate a depth buffer for the swapchain framebuffer.
+*  CSwapchain uses CDepthBuffer to allocate a depth buffer for the swapchain framebuffer.
 *  CSwapchain will automatically resize the depth buffer if the window gets resized.
 *
 *  CAllocator wraps the "Vulkan Memory Allocator" library.
@@ -64,11 +64,9 @@ class CAllocator {
     void CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc, void** mapped = 0);
     void DestroyBuffer(VkBuffer buffer, VmaAllocation alloc);
     
-    //--UNTESTED--
-    //void CreateImage(const void* data, VkExtent3D extent, VkImageUsageFlags usage, VmaMemoryUsage memtype, VkImage& image, VmaAllocation& alloc, VkImageView& imageView);
-    void CreateImage(const void* data, VkExtent3D extent, VkImage& image, VmaAllocation& alloc, VkImageView& view);
+    void CreateImage(const void* data, VkExtent3D extent, VkFormat format, bool mipmap, VkImage& image, VmaAllocation& alloc, VkImageView& view);
     void DestroyImage(VkImage image, VkImageView view, VmaAllocation alloc);
-    //------------
+
 public:
     CAllocator(const CQueue& queue, VkDeviceSize blockSize=256);
     virtual ~CAllocator();
@@ -122,8 +120,6 @@ class CvkImage {
     CAllocator*   allocator;
     VmaAllocation allocation;
     VkImage       image;
-    //VkImageView   view;
-    //VkSampler     sampler;
     VkExtent2D    extent;
     VkFormat      format;
 public:
@@ -133,7 +129,7 @@ public:
     CvkImage(CAllocator& allocator);
     virtual ~CvkImage();
     void Clear();
-    void Data(const void* data, VkExtent3D extent, VkFormat format = VK_FORMAT_B8G8R8A8_UNORM);
+    void Data(const void* data, VkExtent3D extent, VkFormat format = VK_FORMAT_R8G8B8A8_UNORM, bool mipmap = false);
 
     void CreateSampler();
 

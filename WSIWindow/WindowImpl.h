@@ -73,8 +73,8 @@ class EventFIFO {
 class CMTouch{
     struct CPointer{bool active; float x; float y;};
     static const int  MAX_POINTERS = 10;  // Max 10 fingers
-    uint32_t touchID [MAX_POINTERS];      // finger-id lookup table (Desktop)
-    CPointer Pointers[MAX_POINTERS];
+    uint32_t touchID [MAX_POINTERS]{};    // finger-id lookup table (Desktop)
+    CPointer Pointers[MAX_POINTERS]{};
 
   public:
     int count;  // number of active touch-id's (Android only)
@@ -143,7 +143,7 @@ class WindowImpl :public CSurface {
     virtual bool CanPresent(VkPhysicalDevice gpu, uint32_t queue_family) = 0;  // Checks if window can present the given queue type.
 
     bool KeyState(eKeycode key) { return keystate[key]; }                      // returns true if key is pressed
-    bool BtnState(uint8_t  btn) { return (btn < 3) ? btnstate[btn] : 0; }      // returns true if mouse btn is pressed
+    bool BtnState(uint8_t  btn) { return (btn < 4) ? btnstate[btn] : 0; }      // returns true if mouse btn is pressed
     void MousePos(int16_t& x, int16_t& y) {x = mousepos.x; y = mousepos.y;}    // returns mouse x,y position
 
     virtual void TextInput(bool enabled);                         // Shows the Android soft-keyboard. //TODO: Enable TextEvent?

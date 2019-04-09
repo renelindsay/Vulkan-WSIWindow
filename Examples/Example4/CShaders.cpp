@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "CShaders.h"
-#include "spirv_reflect.c"
+//#include "spirv_reflect.c"
 
 #include <iostream>
 #include <algorithm>
@@ -416,7 +416,7 @@ void CShaders::ParseInputs(SpvReflectShaderModule& module) {
     //VkPipelineVertexInputStateCreateInfo vertex_input_info = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
     //std::vector<VkVertexInputAttributeDescription> attribute_descriptions(input_vars.size(), VkVertexInputAttributeDescription{});
 
-    vertex_input_info = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    vertexInputs = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
     attribute_descriptions.resize(input_vars.size());
 
     for (size_t i_var = 0; i_var < input_vars.size(); ++i_var) {
@@ -435,10 +435,10 @@ void CShaders::ParseInputs(SpvReflectShaderModule& module) {
       binding_description.stride += format_size;
     }
 
-    vertex_input_info.vertexBindingDescriptionCount = 1;
-    vertex_input_info.pVertexBindingDescriptions = &binding_description;
-    vertex_input_info.vertexAttributeDescriptionCount = (uint32_t)attribute_descriptions.size();
-    vertex_input_info.pVertexAttributeDescriptions    =           attribute_descriptions.data();
+    vertexInputs.vertexBindingDescriptionCount = 1;
+    vertexInputs.pVertexBindingDescriptions = &binding_description;
+    vertexInputs.vertexAttributeDescriptionCount = (uint32_t)attribute_descriptions.size();
+    vertexInputs.pVertexAttributeDescriptions    =           attribute_descriptions.data();
 
 
 #ifdef ENABLE_LOGGING
@@ -478,6 +478,7 @@ VkDescriptorPool& CShaders::CreateDescriptorPool() {
 
 //----DescriptorSet----
 VkDescriptorSet& CShaders::CreateDescriptorSet() {
+    CheckBindings();
     CreateDescriptorSetLayout();
     CreateDescriptorPool();
 
@@ -500,7 +501,7 @@ VkDescriptorSet& CShaders::CreateDescriptorSet() {
 
 
 void CShaders::Bind(std::string name, CUBO& ubo) { 
-    for(auto& item : dsInfo){
+    for(auto& item : dsInfo) {
         if(item.name == name) {
             LOGI("Bind UBO   to shader-in: \"%s\"\n", name.c_str());
             item.bufferInfo.buffer = ubo;
@@ -513,7 +514,7 @@ void CShaders::Bind(std::string name, CUBO& ubo) {
 }
 
 void CShaders::Bind(std::string name, VkImageView imageView, VkSampler sampler) { 
-    for(auto& item : dsInfo){
+    for(auto& item : dsInfo) {
         if(item.name == name) {
             LOGI("Bind Image to shader-in: \"%s\"\n", name.c_str());
             item.imageInfo.imageView   = imageView;
@@ -525,13 +526,27 @@ void CShaders::Bind(std::string name, VkImageView imageView, VkSampler sampler) 
     LOGE("Failed to bind Image to shader var: \"%s\" (Not found)\n", name.c_str());
 }
 
+void CShaders::Bind(std::string name, const CvkImage& image) {
+    Bind(name, image.view, image.sampler);
+}
+
+void CShaders::CheckBindings() { 
+    for(auto& item : dsInfo) {
+        if(item.bufferInfo.buffer == 0) {
+            LOGE("Shader item: \"%s\" was not bound. Set a binding before creating the DescriptorSet.\n", item.name.c_str());
+            PAUSE; 
+            exit(0);
+        }
+    }
+}
+
 
 //---------------------------------------------PRINT---------------------------------------------
 void CShaders::PrintModuleInfo(const SpvReflectShaderModule& module) {
     //printf("  Source language : %s\n", spvReflectSourceLanguage(module.source_language));
     printf("  Entry Point     : %s\n", module.entry_point_name);
 
-    char* stage ="";
+    const char* stage ="";
     switch(module.shader_stage) {
         case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT                   : stage = "VERTEX"; break;
         case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT     : stage = "TESSELLATION_CONTROL"; break;
