@@ -56,7 +56,7 @@ class CAllocator {
     VkCommandBuffer  command_buffer;
     void BeginCmd();
     void EndCmd();
-    void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
 
     friend class CvkBuffer;
     friend class CvkImage;
@@ -64,8 +64,9 @@ class CAllocator {
     void CreateBuffer(const void* data, uint64_t size, VkBufferUsageFlags usage, VmaMemoryUsage memtype, VkBuffer& buffer, VmaAllocation& alloc, void** mapped = 0);
     void DestroyBuffer(VkBuffer buffer, VmaAllocation alloc);
     
-    void CreateImage(const void* data, VkExtent3D extent, VkFormat format, bool mipmap, VkImage& image, VmaAllocation& alloc, VkImageView& view);
+    void CreateImage(const void* data, VkExtent3D extent, VkFormat format, uint32_t mipLevels, VkImage& image, VmaAllocation& alloc, VkImageView& view);
     void DestroyImage(VkImage image, VkImageView view, VmaAllocation alloc);
+    void GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
 public:
     CAllocator(const CQueue& queue, VkDeviceSize blockSize=256);
@@ -122,16 +123,17 @@ class CvkImage {
     VkImage       image;
     VkExtent2D    extent;
     VkFormat      format;
+    void CreateSampler(float maxLod = 0);
 public:
     VkImageView   view;
     VkSampler     sampler;
+    VkSamplerCreateInfo samplerInfo;  //current sampler settings
 
     CvkImage(CAllocator& allocator);
     virtual ~CvkImage();
     void Clear();
     void Data(const void* data, VkExtent3D extent, VkFormat format = VK_FORMAT_R8G8B8A8_UNORM, bool mipmap = false);
-
-    void CreateSampler();
+    void SetSampler(VkSamplerCreateInfo& samplerInfo); //Update sampler settings
 
     //operator VkImage () {return image;}
     //operator VkImageView () {return view;}

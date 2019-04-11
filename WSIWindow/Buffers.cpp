@@ -1,4 +1,5 @@
 #include "Buffers.h"
+#include "VkFormats.h"
 
 #define NOMINMAX
 //#define VMA_RECORDING_ENABLED   0
@@ -8,6 +9,9 @@
 
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
+#include <math.h>
+
+uint32_t Log2(uint32_t x) {return (uint32_t)(log(x) / log(2));}
 
 uint32_t findMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;
@@ -234,10 +238,13 @@ void CAllocator::DestroyBuffer(VkBuffer buffer, VmaAllocation alloc) {
 }
 //---------------------------------------------------
 
-void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat format, bool mipmap,
-    VkImage& image, VmaAllocation& alloc, VkImageView& view) {
+void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat format, uint32_t mipLevels,
+                             VkImage& image, VmaAllocation& alloc, VkImageView& view) {
+    uint32_t fmt_size = FormatSize(format);
+    //if(mipLevels < 1) mipLevels = 1;
+
     // Copy image data to staging buffer in CPU memory
-    uint64_t size = extent.width * extent.height * extent.depth * 4;
+    uint64_t size = extent.width * extent.height * extent.depth * fmt_size;
 
     VkBufferCreateInfo bufInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
     bufInfo.size = size;
@@ -255,16 +262,19 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat forma
     memcpy(allocInfo.pMappedData, data, size);
 
     // Create image in GPU memory
+    //uint32_t mipLevels = 1;
+    //if(mipmap) mipLevels = (uint32_t)(Log2(std::max(extent.width, extent.height))) + 1;
+
     VkImageCreateInfo imageInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageInfo.flags       = 0;
     imageInfo.imageType   = VK_IMAGE_TYPE_2D;
     imageInfo.format      = format; //VK_FORMAT_R8G8B8A8_UNORM;
     imageInfo.extent      = extent;
-    imageInfo.mipLevels   = 1;
+    imageInfo.mipLevels   = mipLevels; //1;
     imageInfo.arrayLayers = 1;
     imageInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.tiling      = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage       = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage       = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     //imageInfo.queueFamilyIndexCount = 0;
     //imageInfo.pQueueFamilyIndices = 0;
@@ -276,7 +286,7 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat forma
 
     //  Copy image from staging buffer to image
     BeginCmd();
-        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 
         VkBufferImageCopy region = {};
         region.bufferOffset      = 0;
@@ -290,10 +300,12 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat forma
         region.imageExtent = extent;  // { width, height, 1};
         vkCmdCopyBufferToImage(command_buffer, stageBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-        TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        if(mipLevels <= 1) TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels);
     EndCmd();
 
     vmaDestroyBuffer(allocator, stageBuffer, stageBufferAlloc);
+
+    if(mipLevels > 1) GenerateMipmaps(image, VK_FORMAT_R8G8B8A8_UNORM, extent.width, extent.height, mipLevels);
 
     // Create ImageView
     VkImageViewCreateInfo imageViewInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
@@ -302,13 +314,109 @@ void CAllocator::CreateImage(const void* data, VkExtent3D extent, VkFormat forma
     imageViewInfo.format = format;  //VK_FORMAT_R8G8B8A8_UNORM;
     imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageViewInfo.subresourceRange.baseMipLevel   = 0;
-    imageViewInfo.subresourceRange.levelCount     = 1;
+    imageViewInfo.subresourceRange.levelCount     = mipLevels; //1;
     imageViewInfo.subresourceRange.baseArrayLayer = 0;
     imageViewInfo.subresourceRange.layerCount     = 1;
     VKERRCHECK( vkCreateImageView(device, &imageViewInfo, nullptr, &view) );
 }
 
-void CAllocator::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
+
+//---------------------------------Mipmaps--------------------------------
+//------------------------------------------------------------------------
+
+void CAllocator::GenerateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
+    // Check if image format supports linear blitting
+    VkFormatProperties formatProperties;
+    vkGetPhysicalDeviceFormatProperties(gpu, imageFormat, &formatProperties);
+
+    if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
+        LOGE("Texture image format does not support linear blitting!");
+        exit(0);
+    }
+
+    //VkCommandBuffer command_buffer = beginSingleTimeCommands();
+    BeginCmd();
+
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image = image;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.levelCount = 1;
+
+    int32_t mipWidth = texWidth;
+    int32_t mipHeight = texHeight;
+
+    for (uint32_t i = 1; i < mipLevels; i++) {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        vkCmdPipelineBarrier(command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+            0, nullptr,
+            0, nullptr,
+            1, &barrier);
+
+        VkImageBlit blit = {};
+        blit.srcOffsets[0] = {0, 0, 0};
+        blit.srcOffsets[1] = {mipWidth, mipHeight, 1};
+        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+        blit.dstOffsets[0] = {0, 0, 0};
+        blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        vkCmdBlitImage(command_buffer,
+            image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1, &blit,
+            VK_FILTER_LINEAR);
+
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier(command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+            0, nullptr,
+            0, nullptr,
+            1, &barrier);
+
+        if (mipWidth > 1) mipWidth /= 2;
+        if (mipHeight > 1) mipHeight /= 2;
+    }
+
+    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(command_buffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+
+    //endSingleTimeCommands(command_buffer);
+    EndCmd();
+}
+
+//------------------------------------------------------------------------
+
+void CAllocator::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
     //BeginCmd();
         VkImageMemoryBarrier barrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
         //barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
@@ -320,7 +428,7 @@ void CAllocator::TransitionImageLayout(VkImage image, VkImageLayout oldLayout, V
         barrier.image = image;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;  // NOTE: subresourceRange is same as the one in ImageView
         barrier.subresourceRange.baseMipLevel   = 0;
-        barrier.subresourceRange.levelCount     = 1;
+        barrier.subresourceRange.levelCount     = mipLevels; //1;
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount     = 1;
 
@@ -426,31 +534,44 @@ void CvkImage::Clear() {
 
 void CvkImage::Data(const void* data, VkExtent3D extent, VkFormat format, bool mipmap) {
     Clear();
+    uint32_t mipLevels = 1;
+    if(mipmap) mipLevels = (uint32_t)(Log2(std::max(extent.width, extent.height))) + 1;
     allocator->CreateImage(data,  extent, format, mipmap, image, allocation, view);
     if(!image) return;
     this->format = format;
+    CreateSampler((float)mipLevels);
 }
 
-void CvkImage::CreateSampler() {
-    VkSamplerCreateInfo samplerInfo = {};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
+void CvkImage::CreateSampler(float maxLod) {
+    if(sampler) vkDestroySampler(allocator->device, sampler, nullptr);
+    //VkSamplerCreateInfo 
+    samplerInfo = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+    samplerInfo.magFilter    = VK_FILTER_LINEAR;
+    samplerInfo.minFilter    = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    
+    samplerInfo.mipLodBias   = 0;
+
     //samplerInfo.anisotropyEnable = VK_TRUE;
     //samplerInfo.maxAnisotropy = 16;
     samplerInfo.anisotropyEnable = VK_FALSE;
     samplerInfo.maxAnisotropy = 1;
 
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp     = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.minLod        = 0;
+    samplerInfo.maxLod        = maxLod; //mipLevels;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    VKERRCHECK( vkCreateSampler(allocator->device, &samplerInfo, nullptr, &sampler) );
+} 
+
+void CvkImage::SetSampler(VkSamplerCreateInfo& samplerInfo) {
+    if(sampler) vkDestroySampler(allocator->device, sampler, nullptr);
     VKERRCHECK( vkCreateSampler(allocator->device, &samplerInfo, nullptr, &sampler) );
 }
+
 //----------------------------------------------------
 

@@ -82,6 +82,8 @@ int main(int argc, char *argv[]) {
     gpus.Print();        // List the available GPUs.
     if (!gpu) return 0;  // Exit if no devices can present to the given surface.
 
+    //gpu->enabled_features.samplerAnisotropy = VK_TRUE;
+
     //--- Device and Queues ---
     CDevice device(*gpu);                                                      // Create Logical device on selected gpu
 
@@ -182,8 +184,8 @@ int main(int argc, char *argv[]) {
     CImage img("vulkan.png");
     CvkImage vkImg(allocator);
     VkExtent3D extent = {(uint32_t)img.width, (uint32_t)img.height, 1 };
-    vkImg.Data(img.buf, extent);
-    vkImg.CreateSampler();
+    vkImg.Data(img.buf, extent, VK_FORMAT_R8G8B8A8_UNORM, true);
+    //vkImg.CreateSampler();
     // ---------
 
     //--

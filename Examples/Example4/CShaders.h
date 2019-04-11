@@ -84,6 +84,7 @@ class CShaders {
     void PrintModuleInfo        (const SpvReflectShaderModule& module);
     void PrintDescriptorSet     (const SpvReflectDescriptorSet& set);
     std::string ToStringDescriptorType(SpvReflectDescriptorType value);
+    std::string ToStringGLSLType(const SpvReflectTypeDescription& type);
 
     void CheckBindings();
     VkDescriptorSetLayout& CreateDescriptorSetLayout();
