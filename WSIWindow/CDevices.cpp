@@ -122,8 +122,9 @@ void CPhysicalDevices::Print(bool show_queues) {
 
 //-----------------------------CDevice----------------------------
 CQueue* CDevice::AddQueue(VkQueueFlags flags, VkSurfaceKHR surface) {
-    uint f_inx = gpu.FindQueueFamily(flags, surface);                                        // Find correct queue family
-    if (f_inx < 0) { LOGW("Could not create queue with requested properties."); return 0; }  // exit if not found
+    int f_inx_i = gpu.FindQueueFamily(flags, surface);                                       // Find correct queue family
+    if (f_inx_i < 0) { LOGW("Could not create queue with requested properties."); return 0; }// exit if not found
+    uint f_inx = (uint)f_inx_i;
     uint max = gpu.queue_families[f_inx].queueCount;                                         // max number of queues
     uint q_inx = FamilyQueueCount(f_inx);                                                    // count queues from this family
     if (q_inx == max) { LOGW("No more queues available from this family."); return 0; }      // exit if too many queues
