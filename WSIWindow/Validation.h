@@ -83,6 +83,9 @@
     #include <xkbcommon/xkbcommon.h>
     #define cTICK "\u2713"
     #define PAUSE
+#elif __APPLE__
+    #define cTICK "\u2713"
+    #define PAUSE
 #endif
 
 enum eColor { eRESET, eRED, eGREEN, eYELLOW, eBLUE, eMAGENTA, eCYAN, eWHITE,     // normal colors

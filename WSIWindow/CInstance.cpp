@@ -150,6 +150,10 @@ CInstance::CInstance(const bool enable_validation, const char* app_name, const c
         extensions.Pick(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #elif VK_USE_PLATFORM_MIR_KHR
         extensions.Pick(VK_KHR_MIR_SURFACE_EXTENSION_NAME);
+#elif VK_USE_PLATFORM_METAL_EXT
+        extensions.Pick("VK_KHR_portability_enumeration");
+        //extensions.Pick("VK_KHR_portability_subset");
+        extensions.Pick("VK_EXT_metal_surface");
 #endif
     } else LOGE("Failed to load VK_KHR_Surface");
 
@@ -176,11 +180,16 @@ void CInstance::Create(const CLayers& layers, const CExtensions& extensions, con
     app_info.engineVersion      = 1;
     app_info.apiVersion         = VK_API_VERSION_1_0;
 
+    VkInstanceCreateFlags inst_flags = 0;
+#ifdef VK_USE_PLATFORM_METAL_EXT
+    inst_flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
     // initialize the VkInstanceCreateInfo structure
     VkInstanceCreateInfo inst_info    = {};
     inst_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     inst_info.pNext                   = NULL;
-    inst_info.flags                   = 0;
+    inst_info.flags                   = inst_flags;
     inst_info.pApplicationInfo        = &app_info;
     inst_info.enabledExtensionCount   = extensions.PickCount();
     inst_info.ppEnabledExtensionNames = extensions.PickList();
