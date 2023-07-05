@@ -42,6 +42,9 @@
 
 #include "linmath.h"
 #include "cube.h"
+#ifndef VK_DYNAMIC_STATE_RANGE_SIZE
+#define VK_DYNAMIC_STATE_RANGE_SIZE 9
+#endif
 
 #define DEMO_TEXTURE_COUNT 1
 #define APP_SHORT_NAME "cube"
