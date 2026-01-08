@@ -6639,7 +6639,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateIOSSurfaceMVK(
 #endif
 #endif /* VK_USE_PLATFORM_IOS_MVK */
 
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#ifdef VK_USE_PLATFORM_METAL_EXT
 #define VK_MVK_macos_surface 1
 #define VK_MVK_MACOS_SURFACE_SPEC_VERSION 2
 #define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
@@ -6663,7 +6663,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateMacOSSurfaceMVK(
     const VkAllocationCallbacks*                pAllocator,
     VkSurfaceKHR*                               pSurface);
 #endif
-#endif /* VK_USE_PLATFORM_MACOS_MVK */
+#endif /* VK_USE_PLATFORM_METAL_EXT */
 
 #define VK_EXT_external_memory_dma_buf 1
 #define VK_EXT_EXTERNAL_MEMORY_DMA_BUF_SPEC_VERSION 1

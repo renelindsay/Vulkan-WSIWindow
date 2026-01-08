@@ -24,6 +24,10 @@ extern "C" {
 #define VK_NO_PROTOTYPES 1
 #include <vulkan/vulkan.h>
 
+#ifdef VK_USE_PLATFORM_METAL_EXT
+#include <vulkan/vulkan_metal.h>
+#endif
+
 /* Initialize the Vulkan function pointer variables declared in this header.
  * Returns 0 if vulkan is not available, non-zero if it is available.
  */
@@ -227,6 +231,10 @@ extern PFN_vkCreateAndroidSurfaceKHR vkCreateAndroidSurfaceKHR;
 // VK_KHR_win32_surface
 extern PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
 extern PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR vkGetPhysicalDeviceWin32PresentationSupportKHR;
+#endif
+
+#ifdef VK_USE_PLATFORM_METAL_EXT
+extern PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT;
 #endif
 
 // VK_EXT_debug_report

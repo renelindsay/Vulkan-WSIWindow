@@ -3,16 +3,14 @@ cmake_minimum_required(VERSION 2.8)
 set(LIBRARY_NAME WSIWindow)
 
 file(GLOB SRC_LIST "*.h" "*.cpp")                   # List all source files from current directory
+file(GLOB OBJC_SRC_LIST "*.mm")
+if(APPLE)
+    list(APPEND SRC_LIST ${OBJC_SRC_LIST})
+endif()
 add_library (${LIBRARY_NAME} STATIC ${SRC_LIST})    # and add them to the WSIWindow library.
 target_include_directories (${LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")  #for find_package
-
-#=========================VULKAN_WRAPPER==========================
-if (USE_VULKAN_WRAPPER)
-    add_subdirectory(VulkanWrapper)
-    target_link_libraries(${LIBRARY_NAME} VULKAN_WRAPPER)
-endif()
 #=================================================================
 #============================VALIDATION===========================
 #  Validation may be enabled in both debug and release builds.
@@ -94,6 +92,28 @@ endif()
 #if(ANDROID)
 #    add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR)
 #endif()
+#=================================================================
+#==============================MACOS==============================
+if(APPLE)
+    add_definitions(-std=c++11)
+    add_definitions(-DVK_USE_PLATFORM_METAL_EXT)
+
+    find_library(QUARTZCORE_LIB QuartzCore)
+
+    target_link_libraries(${LIBRARY_NAME}
+        "-framework Cocoa"
+        ${QUARTZCORE_LIB}
+    )
+
+    set (VULKAN_LOADER_NAME "vulkan")
+endif()
+
+#=========================VULKAN_WRAPPER==========================
+if (USE_VULKAN_WRAPPER)
+    add_subdirectory(VulkanWrapper)
+    target_link_libraries(${LIBRARY_NAME} VULKAN_WRAPPER)
+endif()
+
 #=================================================================
 #=======================Find Vulkan Loader========================
 if(TARGET ${VULKAN_LOADER_NAME})                                                 # Check if "vulkan" loader target exists

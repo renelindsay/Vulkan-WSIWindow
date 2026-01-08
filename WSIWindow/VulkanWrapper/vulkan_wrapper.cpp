@@ -31,6 +31,8 @@ extern "C" {
 int InitVulkan(void) {
 #ifdef _WIN32
     HMODULE libvulkan = LoadLibrary("vulkan-1.dll");
+#elif __APPLE__
+    void* libvulkan = dlopen("libvulkan.dylib", RTLD_NOW | RTLD_LOCAL);
 #else
     void* libvulkan = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
 #endif
@@ -259,6 +261,10 @@ int InitVulkan(void) {
     vkGetPhysicalDeviceWin32PresentationSupportKHR = reinterpret_cast<PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR>(
         dlsym(libvulkan, "vkGetPhysicalDeviceWin32PresentationSupportKHR"));
 #endif
+
+#ifdef VK_USE_PLATFORM_METAL_EXT
+    vkCreateMetalSurfaceEXT = reinterpret_cast<PFN_vkCreateMetalSurfaceEXT>(dlsym(libvulkan, "vkCreateMetalSurfaceEXT"));
+#endif
     vkCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(dlsym(libvulkan, "vkCreateDebugReportCallbackEXT"));
     vkDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(dlsym(libvulkan, "vkDestroyDebugReportCallbackEXT"));
     vkDebugReportMessageEXT = reinterpret_cast<PFN_vkDebugReportMessageEXT>(dlsym(libvulkan, "vkDebugReportMessageEXT"));
@@ -449,6 +455,10 @@ PFN_vkCreateAndroidSurfaceKHR vkCreateAndroidSurfaceKHR;
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 PFN_vkCreateWin32SurfaceKHR vkCreateWin32SurfaceKHR;
 PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR vkGetPhysicalDeviceWin32PresentationSupportKHR;
+#endif
+
+#ifdef VK_USE_PLATFORM_METAL_EXT
+PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT;
 #endif
 PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
 PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;

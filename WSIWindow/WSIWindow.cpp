@@ -24,6 +24,7 @@
 #include "window_android.h"
 #include "window_win32.h"
 #include "window_xcb.h"
+#include "window_cocoa.h"
 //==============================================================
 
 WSIWindow::WSIWindow(const char* title, const uint width, const uint height) {
@@ -36,6 +37,9 @@ WSIWindow::WSIWindow(const char* title, const uint width, const uint height) {
 #elif VK_USE_PLATFORM_ANDROID_KHR
     LOGI("PLATFORM: ANDROID\n");
     pimpl = new Window_android(title, width, height);
+#elif VK_USE_PLATFORM_METAL_EXT
+    LOGI("PLATFORM: COCOA\n");
+    pimpl = new Window_cocoa(title, width, height);
 #endif
     // TODO:
     //    #ifdef VK_USE_PLATFORM_XLIB_KHR

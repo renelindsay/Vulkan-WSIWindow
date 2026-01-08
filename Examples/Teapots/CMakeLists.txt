@@ -13,6 +13,10 @@ endif()
 if(ANDROID)
     add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR)
 endif()
+if(APPLE)
+    add_definitions(-DVK_USE_PLATFORM_METAL_EXT)
+    add_definitions(-D-DWIN32_LEAN_AND_MEAN)
+endif()
 #-------------------------------------------------------------------------------------------------
 #---------------------------------------Find glslangValidator-------------------------------------
 if(NOT EXISTS ${GLSLANG_VALIDATOR})
